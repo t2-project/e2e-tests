@@ -1,29 +1,23 @@
 package de.unistuttgart.t2.e2etest;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 import javax.annotation.PostConstruct;
 
-import org.opentest4j.AssertionFailedError;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -31,8 +25,8 @@ import de.unistuttgart.t2.common.saga.SagaRequest;
 import de.unistuttgart.t2.inventory.repository.InventoryItem;
 import de.unistuttgart.t2.inventory.repository.ProductRepository;
 import de.unistuttgart.t2.repository.OrderItem;
-import de.unistuttgart.t2.repository.OrderStatus;
 import de.unistuttgart.t2.repository.OrderRepository;
+import de.unistuttgart.t2.repository.OrderStatus;
 import io.eventuate.tram.sagas.orchestration.SagaInstance;
 import io.eventuate.tram.sagas.orchestration.SagaInstanceRepository;
 
@@ -44,15 +38,22 @@ import io.eventuate.tram.sagas.orchestration.SagaInstanceRepository;
  */
 @Component
 public class SagaIntegrationTest {
-
+    
     private final Logger LOG = LoggerFactory.getLogger(getClass());
 
     private ObjectMapper mapper = new ObjectMapper();
     
-    String orchestrator = "http://localhost:8083/order";
-    String failurerate = "http://localhost:8087/failurerate/";
-    String timeoutrate = "http://localhost:8087/timeoutrate/";
-    String timeout = "http://localhost:8087/timeout/";
+    @Value("${t2.e2etest.orchestrator.url}")
+    String orchestrator;
+    
+    @Value("${t2.e2etest.failurerate.url}")
+    String failurerate;
+    
+    @Value("${t2.e2etest.timeoutrate.url}")
+    String timeoutrate;
+    
+    @Value("${t2.e2etest.timeout.url}")
+    String timeout;
 
     @Autowired
     RestTemplate template;
@@ -68,13 +69,13 @@ public class SagaIntegrationTest {
         executethings(() -> sagaSuccessTest(), "sagaSuccessTest");
         executethings(() -> sagaFailureTest(), "sagaFailureTest");
         executethings(() -> sagaTimeoutTest(), "sagaTimeoutTest");
-
     }
 
     public void executethings(Runnable r, String name) {
         LOG.info(String.format("running %s", name));
         try {
             r.run();
+            LOG.info(String.format("finished %s without failure", name));
         } catch (Throwable e) {
             e.printStackTrace();
             LOG.info(String.format("finished %s with failure : %s ", name, e.getMessage()));
@@ -111,6 +112,13 @@ public class SagaIntegrationTest {
         assertOrderStatus(sagainstance, OrderStatus.FAILURE);
     }
 
+    public void sagaRuntimeTest(String sagaid) {
+        SagaInstance sagainstance = getFinishedSagaInstance(sagaid);
+        
+        assertOrderStatus(sagainstance, getStatus());
+    }
+    
+    
     public void InteractionWithUIBackendTest() {
 
         SagaRequest req = new SagaRequest();
@@ -184,6 +192,18 @@ public class SagaIntegrationTest {
                     return a;
                 });
         return sessionIds;
+    }
+    
+    /**
+     * TODO : maybe loop payment back here, such that im sure about reply :x 
+     * 
+     * 
+     * @return
+     */
+    private OrderStatus getStatus() {
+        //TODO talk to credit institute
+        
+        return OrderStatus.SUCCESS;
     }
 
     /**

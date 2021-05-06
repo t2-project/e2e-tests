@@ -1,0 +1,33 @@
+spring:
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: ${SPRING_DATASOURCE_DRIVER_CLASS_NAME}
+  profiles:
+    active: ${SPRING_PROFILE_ACTIVE}
+  data:
+    mongodb:
+      uri: ${SPRING_MONGO_URL}
+# inventory: dockerspring.data.mongodb.uri= mongodb://localhost:27017/inventory
+# orders: spring.data.mongodb.uri=mongodb://localhost:27017/data
+
+eventuatelocal:
+  kafka:
+    bootstrap:
+      servers: ${EVENTUATELOCAL_KAFKA_BOOTSTRAP_SERVERS}
+  zookeeper:
+    connection:
+      string: ${EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING}
+
+t2:
+  e2etest:
+    orchestrator:
+      url: ${T2_ORCHESTRATOR_URL}
+    failurerate:
+      url: ${T2_FAILURERATE_URL}
+    timeoutrate:
+      url: ${T2_TIMEOUTRATE_URL}
+    imeout:
+      url: ${T2_TIMEOUT_URL}
+
