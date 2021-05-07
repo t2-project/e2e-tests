@@ -64,7 +64,7 @@ jobs:
     - name: build inventory
       run: cd inventory && mvn clean install
     - name: install inventory
-      run: cd inevntory && mvn install:install-file -Dfile=./target/inventory-0.0.1-SNAPSHOT.jar.original  -DpomFile=./pom.xml
+      run: cd inventory && mvn install:install-file -Dfile=./target/inventory-0.0.1-SNAPSHOT.jar.original  -DpomFile=./pom.xml
 #
     - name: build e2etest
       run: cd e2e-tests && mvn clean install
