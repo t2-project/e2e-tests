@@ -63,7 +63,8 @@ public class SagaIntegrationTest {
 
     // i'm not sure how conncurent spring stuff is, so im using a concurrent but...
     // better safe than sorry or something like that.
-    static Map<String, OrderStatus> replyForSaga = new ConcurrentHashMap<>();
+    static Map<String, OrderStatus> correlationToStatus = new ConcurrentHashMap<>();
+    static Map<String, String> correlationToSaga = new ConcurrentHashMap<>();
 
     @PostConstruct
     public void test() {
@@ -73,8 +74,8 @@ public class SagaIntegrationTest {
 
     /**
      * execute something an prettily print info about failures and exceptions.
-     *  
-     * @param r thing to run
+     * 
+     * @param r    thing to run
      * @param name for the sake of displaying something
      */
     public void executethings(Runnable r, String name) {
@@ -97,7 +98,7 @@ public class SagaIntegrationTest {
         String sagaid = postToOrchestrator(request);
         SagaInstance sagainstance = getFinishedSagaInstance(sagaid);
 
-        assertOrderStatus(sagainstance, replyForSaga.get(sagaid));
+        assertOrderStatus(sagainstance, correlationToStatus.get(sagaid));
 
         // can not assert reservations, because no ui backend interaction
     }
@@ -107,12 +108,11 @@ public class SagaIntegrationTest {
      * 
      * @param request the saga request
      */
-    public void sagaRuntimeTest(SagaRequest request) {
-        String sagaid = postToOrchestrator(request);
-        SagaInstance sagainstance = getFinishedSagaInstance(sagaid);
+    public void sagaRuntimeTest(String sagaid) {
+        SagaInstance sagainstance = getFinishedSagaInstance(correlationToSaga.get(sagaid));
 
-        assertOrderStatus(sagainstance, replyForSaga.get(sagaid));
-        assertReservationStatus(sagainstance, replyForSaga.get(sagaid));
+        assertOrderStatus(sagainstance, correlationToStatus.get(sagaid));
+        assertReservationStatus(sagainstance, correlationToStatus.get(sagaid));
     }
 
     /**
@@ -154,7 +154,7 @@ public class SagaIntegrationTest {
      * @param request the request to send
      * @return id of started saga instance
      */
-    private String postToOrchestrator(SagaRequest request) {
+    public String postToOrchestrator(SagaRequest request) {
         String sagaid = template.postForEntity(orchestrator, request, String.class).getBody();
         return sagaid;
     }
@@ -172,13 +172,11 @@ public class SagaIntegrationTest {
         String sessionId = getSessionId(sagainstance.getSerializedSagaData().getSagaDataJSON());
         Set<String> sessionIds = getSessionIdsFromReservations();
 
-        if (expected == OrderStatus.SUCCESS) {
-            assertFalse(sessionIds.contains(sessionId),
-                    String.format("reservations for saga instance %s not commited.", sagainstance.getId()));
-        } else {
-            assertTrue(sessionIds.contains(sessionId),
-                    String.format("reservations for saga instance %s went missing.", sagainstance.getId()));
-        }
+        assertFalse(sessionIds.contains(sessionId),
+                String.format("reservations for saga instance %s not deleted.", sagainstance.getId()));
+
+        // i will not assert, that the product unis were updated (or not) because that
+        // is inventory internal and thus not part of e2e.
     }
 
     /**

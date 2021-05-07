@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import de.unistuttgart.t2.common.saga.SagaData;
 import de.unistuttgart.t2.common.saga.SagaRequest;
+import de.unistuttgart.t2.payment.provider.PaymentData;
 import de.unistuttgart.t2.repository.OrderStatus;
 
 @RestController
@@ -36,9 +37,16 @@ public class TestController {
     @PostMapping(value = "/test")
     public void test(@RequestBody SagaRequest request) {
         LOG.info(String.format("incoming saga request: %s", request.toString()));
-       
-        service.executethings(() -> service.sagaRuntimeTest(request), request.getSessionId());
 
+        
+        String correlationId = request.getSessionId();
+        
+        SagaIntegrationTest.correlationToStatus.put(correlationId, OrderStatus.FAILURE);
+        
+        request.setChecksum(request.getSessionId());
+        String sagaID = service.postToOrchestrator(request);
+        
+        SagaIntegrationTest.correlationToSaga.put(correlationId, sagaID);
     }
 
     /** 
@@ -49,14 +57,19 @@ public class TestController {
      */
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PostMapping(value = "/fakepay")
-    public void fakepay(@RequestBody String sagaid) throws Exception {
-        LOG.info(String.format("payment saga request: %s", sagaid));
+    public void fakepay(@RequestBody PaymentData paymentdata) throws Exception {
+        LOG.info(String.format("payment saga request:"));
         
-        if (new Random().nextDouble() < 0.5) {
-            SagaIntegrationTest.replyForSaga.put(sagaid, OrderStatus.FAILURE);
+        String sagaid = SagaIntegrationTest.correlationToSaga.get(paymentdata.getChecksum());
+        
+        new Thread(()->service.executethings(()-> service.sagaRuntimeTest(paymentdata.getChecksum()), sagaid), sagaid).start();
+        
+        LOG.info("sent reply");        
+ 
+        OrderStatus expected = SagaIntegrationTest.correlationToStatus.get(paymentdata.getChecksum());
+        if (expected == OrderStatus.FAILURE) {
             throw new Exception();
-        } else {
-            SagaIntegrationTest.replyForSaga.put(sagaid, OrderStatus.SUCCESS);
-        }
+        } 
+                
     }
 }
