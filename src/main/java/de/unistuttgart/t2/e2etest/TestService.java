@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PostConstruct;
 
@@ -34,7 +35,7 @@ import io.eventuate.tram.sagas.orchestration.SagaInstance;
 import io.eventuate.tram.sagas.orchestration.SagaInstanceRepository;
 
 /**
- * integration test the saga - i guess???
+ * service for testing the t2 store.
  * 
  * @author maumau
  *
@@ -49,9 +50,6 @@ public class TestService {
     @Value("${t2.e2etest.orchestrator.url}")
     String orchestrator;
 
-// for later usage....?
-//    @Autowired
-//    ProviderConfigHelper helper;
     @Autowired
     RestTemplate template;
     @Autowired
@@ -61,91 +59,31 @@ public class TestService {
     @Autowired
     ProductRepository productRepository;
 
-    // i'm not sure how conncurent spring stuff is, so im using a concurrent but...
-    // better safe than sorry or something like that.
+    // i'm not sure how concurrent spring stuff is, so i'm using a concurrent map,
+    // feels saver or something like that.
     static Map<String, OrderStatus> correlationToStatus = new ConcurrentHashMap<>();
     static Map<String, String> correlationToSaga = new ConcurrentHashMap<>();
-
-    @PostConstruct
-    public void test() {
-        // mandatorily run each once.
-        executethings(() -> initTest(), "sagaSuccessTest");
-    }
-
-    /**
-     * execute something an prettily print info about failures and exceptions.
-     * 
-     * @param r    thing to run
-     * @param name for the sake of displaying something
-     */
-    public void executethings(Runnable r, String name) {
-        LOG.info(String.format("running %s", name));
-        try {
-            r.run();
-            LOG.info(String.format("finished %s without failure", name));
-        } catch (Throwable e) {
-            e.printStackTrace();
-            LOG.info(String.format("finished %s with failure : %s ", name, e.getMessage()));
-        }
-    }
-
-    /**
-     * TODO
-     */
-    public void initTest() {
-        SagaRequest request = new SagaRequest("sessionId", "cardNumber", "cardOwner", "sessionId", 42);
-
-        String sagaid = postToOrchestrator(request);
-        SagaInstance sagainstance = getFinishedSagaInstance(sagaid);
-
-        assertOrderStatus(sagainstance, correlationToStatus.get(sagaid));
-
-        // can not assert reservations, because no ui backend interaction
-    }
 
     /**
      * test sagas at runtime
      * 
      * @param request the saga request
      */
-    public void sagaRuntimeTest(String sagaid) {
-        SagaInstance sagainstance = getFinishedSagaInstance(correlationToSaga.get(sagaid));
+    public void sagaRuntimeTest(String correlationid) {
+        String sagaid = correlationToSaga.get(correlationid);
+        LOG.info(String.format("%s : start test", sagaid));
+        try {
+            SagaInstance sagainstance = getFinishedSagaInstance(sagaid);
 
-        assertOrderStatus(sagainstance, correlationToStatus.get(sagaid));
-        assertReservationStatus(sagainstance, correlationToStatus.get(sagaid));
-    }
+            assertOrderStatus(sagainstance, correlationToStatus.get(correlationid));
+            assertReservationStatus(sagainstance, correlationToStatus.get(correlationid));
+            assertSagaInstanceStatus(sagainstance, correlationToStatus.get(correlationid));
 
-    /**
-     * get saga instance with given id but only if its finished.
-     * 
-     * poll saga db repeatedly until either the saga instance transitioned into end
-     * state. if it doesnt reach the end state within a certain time, it throws an
-     * exception.
-     * 
-     * TODO : better timeout exception
-     * 
-     * @param sagaid
-     * @return saga instance in end state
-     */
-    private SagaInstance getFinishedSagaInstance(String sagaid) {
-        String sagatype = "de.unistuttgart.t2.orchestrator.saga.Saga";
-
-        for (int i = 0; i < 20; i++) {
-            SagaInstance actual = sagaRepository.find(sagatype, sagaid);
-
-            // isEndState() always returns 'false' (even though the saga instance has very
-            // clearly reached the endstate) thus test with stateName.
-            if (actual.getStateName().contains("true")) {
-                return actual;
-            }
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            LOG.info(String.format("%s : no failure", sagaid));
+        } catch (Throwable e) {
+            LOG.info(String.format("%s : has failure : %s ", sagaid, e.getMessage()));
+            e.printStackTrace();
         }
-        // TODO this is bad exception. make better
-        throw new RuntimeException(String.format("Saga %s did not finish within %d seconds.", sagaid, 20 * 5));
     }
 
     /**
@@ -155,8 +93,63 @@ public class TestService {
      * @return id of started saga instance
      */
     public String postToOrchestrator(SagaRequest request) {
-        String sagaid = template.postForEntity(orchestrator, request, String.class).getBody();
-        return sagaid;
+        return template.postForEntity(orchestrator, request, String.class).getBody();
+    }
+
+    /**
+     * get saga instance with given id but only if its finished.
+     * 
+     * poll saga instance database repeatedly until either the saga instance
+     * transitioned into end state or a maximum number of iterations is exceeded.
+     * 
+     * @param sagaid
+     * @return saga instance in end state
+     * @throws TimeoutException if max number of iterations is exceeded.
+     */
+    private SagaInstance getFinishedSagaInstance(String sagaid) throws TimeoutException {
+        String sagatype = "de.unistuttgart.t2.orchestrator.saga.Saga";
+
+        // TODO : might be usefull is maxiteration and seconds are configurable.
+        int maxiteration = 20;
+        int seconds = 5000;
+
+        for (int i = 0; i < maxiteration; i++) {
+            SagaInstance actual = sagaRepository.find(sagatype, sagaid);
+
+            // isEndState() always returns 'false' (even though the saga instance has very
+            // clearly reached the endstate) thus test with stateName.
+            if (actual.getStateName().contains("true")) {
+                return actual;
+            }
+            try {
+                Thread.sleep(seconds);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        throw new TimeoutException(
+                String.format("Saga instance %s did not finish after %d  iteration and a total of %d seconds.", sagaid,
+                        maxiteration, maxiteration * seconds));
+    }
+
+    /**
+     * assert status of saga instance.
+     * 
+     * @note apparently the 'compensation' entry from the saga instance database is
+     *       not represented correctly in the saga instances read from the database.
+     *       TODO : guess i should stop relying on eventuate and talk to the db my
+     *       self but i dont want to ToT
+     * 
+     * @param sagainstance the saga instance under test
+     * @param expected     outcome to test for
+     */
+    private void assertSagaInstanceStatus(SagaInstance sagainstance, OrderStatus expected) {
+        // end state already reached, or else we would not be here.
+//        if (expected == OrderStatus.FAILURE) {
+//            assertTrue(sagainstance.isCompensating());
+//        } else {
+//            assertFalse(sagainstance.isCompensating());
+//        }
     }
 
     /**
