@@ -38,17 +38,6 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-amqp</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<scope>runtime</scope>
-		</dependency>
-
 		<!-- for saga instance repo -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -61,66 +50,51 @@
 		<dependency>
 			<groupId>io.eventuate.tram.core</groupId>
 			<artifactId>eventuate-tram-spring-events</artifactId>
-			<version>0.26.1.RELEASE</version>
+			<version>${TRAM_VERSION}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.eventuate.tram.core</groupId>
 			<artifactId>eventuate-tram-spring-commands</artifactId>
-			<version>0.26.1.RELEASE</version>
+			<version>${TRAM_VERSION}</version>
 		</dependency>
 		<dependency>
 			<groupId>io.eventuate.tram.core</groupId>
 			<artifactId>eventuate-tram-spring-messaging</artifactId>
-			<version>0.26.1.RELEASE</version>
+			<version>${TRAM_VERSION}</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/io.eventuate.tram.core/eventuate-tram-spring-producer-jdbc -->
 		<dependency>
 			<groupId>io.eventuate.tram.core</groupId>
 			<artifactId>eventuate-tram-spring-producer-jdbc</artifactId>
-			<version>0.26.1.RELEASE</version>
+			<version>${TRAM_VERSION}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/io.eventuate.tram.core/eventuate-tram-spring-consumer-jdbc -->
 		<dependency>
 			<groupId>io.eventuate.tram.core</groupId>
 			<artifactId>eventuate-tram-spring-consumer-jdbc</artifactId>
-			<version>0.26.1.RELEASE</version>
+			<version>${TRAM_VERSION}</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/io.eventuate.tram.core/eventuate-tram-spring-consumer-kafka -->
 		<dependency>
 			<groupId>io.eventuate.tram.core</groupId>
 			<artifactId>eventuate-tram-spring-consumer-kafka</artifactId>
-			<version>0.24.0.RELEASE</version>
-		</dependency>
-
-		<!-- rabbit MQ ? -->
-		<!-- https://mvnrepository.com/artifact/io.eventuate.tram.core/eventuate-tram-consumer-rabbitmq -->
-		<dependency>
-			<groupId>io.eventuate.tram.core</groupId>
-			<artifactId>eventuate-tram-consumer-rabbitmq</artifactId>
-			<version>0.24.0.RELEASE</version>
+			<version>${TRAM_VERSION}</version>
 		</dependency>
 
 		<!-- https://mvnrepository.com/artifact/io.eventuate.tram.sagas/eventuate-tram-sagas-spring-orchestration -->
 		<dependency>
 			<groupId>io.eventuate.tram.sagas</groupId>
 			<artifactId>eventuate-tram-sagas-spring-orchestration</artifactId>
-			<version>0.15.2.RELEASE</version>
+			<version>${TRAM_PARTICIPANT_VERSION}</version>
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/io.eventuate.tram.sagas/eventuate-tram-sagas-spring-orchestration-simple-dsl -->
 		<dependency>
 			<groupId>io.eventuate.tram.sagas</groupId>
 			<artifactId>eventuate-tram-sagas-spring-orchestration-simple-dsl</artifactId>
-			<version>0.15.2.RELEASE</version>
+			<version>${TRAM_PARTICIPANT_VERSION}</version>
 		</dependency>
-
-		<dependency>
-			<groupId>org.mongodb</groupId>
-			<artifactId>mongo-java-driver</artifactId>
-			<version>3.12.8</version>
-		</dependency>
-
 
 		<!-- common things -->
 		<dependency>
