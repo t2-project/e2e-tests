@@ -1,12 +1,15 @@
 package de.unistuttgart.t2.e2etest;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.annotation.PostConstruct;
 
@@ -38,23 +41,17 @@ import io.eventuate.tram.sagas.orchestration.SagaInstanceRepository;
  */
 @Component
 public class SagaIntegrationTest {
-    
+
     private final Logger LOG = LoggerFactory.getLogger(getClass());
 
     private ObjectMapper mapper = new ObjectMapper();
-    
+
     @Value("${t2.e2etest.orchestrator.url}")
     String orchestrator;
-    
-    @Value("${t2.e2etest.failurerate.url}")
-    String failurerate;
-    
-    @Value("${t2.e2etest.timeoutrate.url}")
-    String timeoutrate;
-    
-    @Value("${t2.e2etest.timeout.url}")
-    String timeout;
 
+// for later usage....?
+//    @Autowired
+//    ProviderConfigHelper helper;
     @Autowired
     RestTemplate template;
     @Autowired
@@ -64,13 +61,22 @@ public class SagaIntegrationTest {
     @Autowired
     ProductRepository productRepository;
 
+    // i'm not sure how conncurent spring stuff is, so im using a concurrent but...
+    // better safe than sorry or something like that.
+    static Map<String, OrderStatus> replyForSaga = new ConcurrentHashMap<>();
+
     @PostConstruct
     public void test() {
-        executethings(() -> sagaSuccessTest(), "sagaSuccessTest");
-        executethings(() -> sagaFailureTest(), "sagaFailureTest");
-        executethings(() -> sagaTimeoutTest(), "sagaTimeoutTest");
+        // mandatorily run each once.
+        executethings(() -> initTest(), "sagaSuccessTest");
     }
 
+    /**
+     * execute something an prettily print info about failures and exceptions.
+     *  
+     * @param r thing to run
+     * @param name for the sake of displaying something
+     */
     public void executethings(Runnable r, String name) {
         LOG.info(String.format("running %s", name));
         try {
@@ -82,70 +88,44 @@ public class SagaIntegrationTest {
         }
     }
 
-    public void sagaSuccessTest() {
-        setUpSuccess();
+    /**
+     * TODO
+     */
+    public void initTest() {
+        SagaRequest request = new SagaRequest("sessionId", "cardNumber", "cardOwner", "sessionId", 42);
 
-        String sagaid = postToOrchestrator();
-
+        String sagaid = postToOrchestrator(request);
         SagaInstance sagainstance = getFinishedSagaInstance(sagaid);
 
-        assertOrderStatus(sagainstance, OrderStatus.SUCCESS);
-    }
+        assertOrderStatus(sagainstance, replyForSaga.get(sagaid));
 
-    public void sagaFailureTest() {
-        setUpFailure();
-
-        String sagaid = postToOrchestrator();
-
-        SagaInstance sagainstance = getFinishedSagaInstance(sagaid);
-
-        assertOrderStatus(sagainstance, OrderStatus.FAILURE);
-    }
-
-    public void sagaTimeoutTest() {
-        setUpTimeout();
-
-        String sagaid = postToOrchestrator();
-
-        SagaInstance sagainstance = getFinishedSagaInstance(sagaid);
-
-        assertOrderStatus(sagainstance, OrderStatus.FAILURE);
-    }
-
-    public void sagaRuntimeTest(String sagaid) {
-        SagaInstance sagainstance = getFinishedSagaInstance(sagaid);
-        
-        assertOrderStatus(sagainstance, getStatus());
-    }
-    
-    
-    public void InteractionWithUIBackendTest() {
-
-        SagaRequest req = new SagaRequest();
-
-        // talk to uibackend
-        // add items: cart, inventory
-        String ressourceUrl = "http://localhost:8081/uibackend";
-        SagaRequest request = new SagaRequest("sessionId", "cardNumber", "cardOwner", "foo", 42);
-        String sagaid = template.postForEntity(ressourceUrl, request, String.class).getBody();
-
-    }
-
-    public void foo() {
-        // this works as long as i put everything to the same db.
-        List<OrderItem> orders = orderRepository.findAll();
-        List<InventoryItem> products = productRepository.findAll();
-
-        // extract order id from JSON :
-        // {"cardNumber":"cardNumber","cardOwner":"cardOwner","checksum":"checksum","sessionId":"sessionId","total":42.0}
-
+        // can not assert reservations, because no ui backend interaction
     }
 
     /**
+     * test sagas at runtime
+     * 
+     * @param request the saga request
+     */
+    public void sagaRuntimeTest(SagaRequest request) {
+        String sagaid = postToOrchestrator(request);
+        SagaInstance sagainstance = getFinishedSagaInstance(sagaid);
+
+        assertOrderStatus(sagainstance, replyForSaga.get(sagaid));
+        assertReservationStatus(sagainstance, replyForSaga.get(sagaid));
+    }
+
+    /**
+     * get saga instance with given id but only if its finished.
+     * 
+     * poll saga db repeatedly until either the saga instance transitioned into end
+     * state. if it doesnt reach the end state within a certain time, it throws an
+     * exception.
+     * 
      * TODO : better timeout exception
      * 
      * @param sagaid
-     * @return
+     * @return saga instance in end state
      */
     private SagaInstance getFinishedSagaInstance(String sagaid) {
         String sagatype = "de.unistuttgart.t2.orchestrator.saga.Saga";
@@ -153,6 +133,8 @@ public class SagaIntegrationTest {
         for (int i = 0; i < 20; i++) {
             SagaInstance actual = sagaRepository.find(sagatype, sagaid);
 
+            // isEndState() always returns 'false' (even though the saga instance has very
+            // clearly reached the endstate) thus test with stateName.
             if (actual.getStateName().contains("true")) {
                 return actual;
             }
@@ -162,28 +144,64 @@ public class SagaIntegrationTest {
                 e.printStackTrace();
             }
         }
-        // TODO this is bad. make better
+        // TODO this is bad exception. make better
         throw new RuntimeException(String.format("Saga %s did not finish within %d seconds.", sagaid, 20 * 5));
     }
 
-    private String postToOrchestrator() {
-        SagaRequest request = new SagaRequest("sessionId", "cardNumber", "cardOwner", "sessionId", 42);
+    /**
+     * send post request to start a saga to the orchestrator
+     * 
+     * @param request the request to send
+     * @return id of started saga instance
+     */
+    private String postToOrchestrator(SagaRequest request) {
         String sagaid = template.postForEntity(orchestrator, request, String.class).getBody();
         return sagaid;
     }
 
+    /**
+     * assert presence or absence of reservations belonging to given saga instance.
+     * 
+     * if expected is SUCCESS, the reservations should be absent (i.e. commited),
+     * otherwise they should be present.
+     * 
+     * @param sagainstance the saga instance under test
+     * @param expected     outcome to test for
+     */
+    private void assertReservationStatus(SagaInstance sagainstance, OrderStatus expected) {
+        String sessionId = getSessionId(sagainstance.getSerializedSagaData().getSagaDataJSON());
+        Set<String> sessionIds = getSessionIdsFromReservations();
+
+        if (expected == OrderStatus.SUCCESS) {
+            assertFalse(sessionIds.contains(sessionId),
+                    String.format("reservations for saga instance %s not commited.", sagainstance.getId()));
+        } else {
+            assertTrue(sessionIds.contains(sessionId),
+                    String.format("reservations for saga instance %s went missing.", sagainstance.getId()));
+        }
+    }
+
+    /**
+     * assert correctness of order belonging to given saga instance.
+     * 
+     * @param sagainstance the saga instance under test
+     * @param expected     outcome to test for
+     */
     private void assertOrderStatus(SagaInstance sagainstance, OrderStatus expected) {
         String sessionId = getSessionId(sagainstance.getSerializedSagaData().getSagaDataJSON());
         String orderId = getOrderId(sagainstance.getSerializedSagaData().getSagaDataJSON());
 
         Optional<OrderItem> order = orderRepository.findById(orderId);
         assertTrue(order.isPresent(), String.format("missing order with orderid %s", orderId));
-        assertEquals(sessionId, order.get().getSessionId(),
-                String.format("wrong sessionId for order %s", orderId));
-        assertEquals(expected, order.get().getStatus(),
-                String.format("wrong order status for order %s", orderId));
+        assertEquals(sessionId, order.get().getSessionId(), String.format("wrong sessionId for order %s", orderId));
+        assertEquals(expected, order.get().getStatus(), String.format("wrong order status for order %s", orderId));
     }
 
+    /**
+     * get all session ids for which a reservation exists.
+     * 
+     * @return set session ids
+     */
     private Set<String> getSessionIdsFromReservations() {
         List<InventoryItem> items = productRepository.findAll();
         Set<String> sessionIds = items.stream().map(i -> i.getReservations().keySet()).reduce(new HashSet<String>(),
@@ -193,49 +211,12 @@ public class SagaIntegrationTest {
                 });
         return sessionIds;
     }
-    
+
     /**
-     * TODO : maybe loop payment back here, such that im sure about reply :x 
+     * extract session id from json representation of saga details
      * 
-     * 
-     * @return
-     */
-    private OrderStatus getStatus() {
-        //TODO talk to credit institute
-        
-        return OrderStatus.SUCCESS;
-    }
-
-    /**
-     * configure credit institute, such that payment step of saga succeeds
-     */
-    private void setUpSuccess() {
-        assertEquals(0, template.getForEntity(timeoutrate + "0", Double.class).getBody(), "failed to set timeoutrate");
-        assertEquals(0, template.getForEntity(failurerate + "0", Double.class).getBody(), "failed to set failurerate");
-    }
-
-    /**
-     * configure credit institute such that payment step of saga fails
-     */
-    private void setUpFailure() {
-        assertEquals(0, template.getForEntity(timeoutrate + "0", Double.class).getBody(), "failed to set timeoutrate");
-        assertEquals(1, template.getForEntity(failurerate + "1", Double.class).getBody(), "failed to set failurerate");
-    }
-
-    /**
-     * configure credit institute such that payment step of saga timeouts
-     */
-    private void setUpTimeout() {
-        assertEquals(1, template.getForEntity(timeoutrate + "1", Double.class).getBody(), "failed to set timeoutrate");
-        assertEquals(0, template.getForEntity(failurerate + "0", Double.class).getBody(), "failed to set failurerate");
-        assertEquals(4000, template.getForEntity(timeout + "4000", Double.class).getBody(), "failed to set delay");
-    }
-
-
-    /**
-     * 
-     * @param json
-     * @return
+     * @param json saga details as json
+     * @return the session id
      */
     private String getSessionId(String json) {
         try {
@@ -248,9 +229,10 @@ public class SagaIntegrationTest {
     }
 
     /**
+     * extract order id from json representation of saga details
      * 
-     * @param json
-     * @return
+     * @param json saga details as json
+     * @return the order id
      */
     private String getOrderId(String json) {
         try {
@@ -258,8 +240,8 @@ public class SagaIntegrationTest {
             return mapper.treeToValue(root.path("orderId"), String.class);
         } catch (JsonProcessingException e) {
             // TODO Auto-generated catch block
-            
-            throw new RuntimeException("parsing json failed",e);
+
+            throw new RuntimeException("parsing json failed", e);
         }
     }
 }
