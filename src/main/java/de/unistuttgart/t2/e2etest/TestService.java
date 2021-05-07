@@ -57,10 +57,12 @@ public class TestService {
     @Autowired
     ProductRepository productRepository;
 
+    public Set<String> inprogress = new HashSet();
+
     // i'm not sure how concurrent spring stuff is, so i'm using a concurrent map,
     // feels saver or something like that.
-    static Map<String, OrderStatus> correlationToStatus = new ConcurrentHashMap<>();
-    static Map<String, String> correlationToSaga = new ConcurrentHashMap<>();
+    public Map<String, OrderStatus> correlationToStatus = new ConcurrentHashMap<>();
+    public Map<String, String> correlationToSaga = new ConcurrentHashMap<>();
 
     /**
      * test sagas at runtime
@@ -82,6 +84,9 @@ public class TestService {
             LOG.info(String.format("%s : has failure : %s ", sagaid, e.getMessage()));
             e.printStackTrace();
         }
+        correlationToSaga.remove(correlationid);
+        correlationToStatus.remove(correlationid);
+        inprogress.remove(correlationid);
     }
 
     /**
@@ -107,7 +112,7 @@ public class TestService {
     private SagaInstance getFinishedSagaInstance(String sagaid) throws TimeoutException {
         String sagatype = "de.unistuttgart.t2.orchestrator.saga.Saga";
 
-        // TODO : might be usefull is maxiteration and seconds are configurable.
+        // TODO : might be usefull if maxiteration and seconds are configurable.
         int maxiteration = 20;
         int seconds = 5000;
 
@@ -116,7 +121,7 @@ public class TestService {
 
             // isEndState() always returns 'false' (even though the saga instance has very
             // clearly reached the endstate) thus test with stateName.
-            if (actual.getStateName().contains("true")) {
+            if (isEndState(actual.getStateName())) {
                 return actual;
             }
             try {
@@ -133,10 +138,9 @@ public class TestService {
     /**
      * assert status of saga instance.
      * 
-     * @note apparently the 'compensation' entry from the saga instance database is
-     *       not represented correctly in the saga instances read from the database.
-     *       TODO : guess i should stop relying on eventuate and talk to the db my
-     *       self but i dont want to ToT
+     * @note apparently the 'compensation' entry from the saga instance database
+     *       represents whether the instance is current instance is compensating,
+     *       i.e. a finished saga instance is never compensating
      * 
      * @param sagainstance the saga instance under test
      * @param expected     outcome to test for
@@ -199,6 +203,22 @@ public class TestService {
                     return a;
                 });
         return sessionIds;
+    }
+
+    /**
+     * extract session id from json representation of saga details
+     * 
+     * @param json saga details as json
+     * @return true is saga instance in endstate
+     */
+    private boolean isEndState(String json) {
+        try {
+            JsonNode root = mapper.readTree(json);
+            return mapper.treeToValue(root.path("endState"), String.class).equals("true");
+        } catch (JsonProcessingException e) {
+            // TODO Auto-generated catch block
+            throw new RuntimeException("parsing json failed", e);
+        }
     }
 
     /**

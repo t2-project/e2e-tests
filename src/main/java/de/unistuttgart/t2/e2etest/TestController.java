@@ -45,16 +45,16 @@ public class TestController {
         String correlationId = request.getSessionId();
 
         if (new Random().nextDouble() < 0.5) {
-            TestService.correlationToStatus.put(correlationId, OrderStatus.FAILURE);
+            service.correlationToStatus.put(correlationId, OrderStatus.FAILURE);
         } else {
-            TestService.correlationToStatus.put(correlationId, OrderStatus.SUCCESS);
+            service.correlationToStatus.put(correlationId, OrderStatus.SUCCESS);
         }
 
         request.setChecksum(request.getSessionId());
         String sagaID = service.postToOrchestrator(request);
 
         // ... but also save sagaId because this is the only play i can get it!!
-        TestService.correlationToSaga.put(correlationId, sagaID);
+        service.correlationToSaga.put(correlationId, sagaID);
     }
 
     /**
@@ -65,12 +65,16 @@ public class TestController {
      */
     @PostMapping(value = "/fakepay")
     public void fakepay(@RequestBody PaymentData paymentdata) throws Exception {
+        // beware of retries!!
+        if (!service.inprogress.contains(paymentdata.getChecksum())) {
+            String sagaid = service.correlationToSaga.get(paymentdata.getChecksum());
+            LOG.info(String.format("Receive payment request: correlationsid: %s, sagaid: %s", paymentdata.getChecksum(), sagaid) );
 
-        String sagaid = TestService.correlationToSaga.get(paymentdata.getChecksum());
+            new Thread(() -> service.sagaRuntimeTest(paymentdata.getChecksum()), sagaid).start();
+            service.inprogress.add(paymentdata.getChecksum());
 
-        new Thread(() -> service.sagaRuntimeTest(paymentdata.getChecksum()), sagaid).start();
-
-        OrderStatus expected = TestService.correlationToStatus.get(paymentdata.getChecksum());
+        }
+        OrderStatus expected = service.correlationToStatus.get(paymentdata.getChecksum());
 
         if (expected == OrderStatus.FAILURE) {
             throw new Exception("fake pay failure");
