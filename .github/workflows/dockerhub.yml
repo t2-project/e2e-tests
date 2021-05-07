@@ -1,0 +1,83 @@
+name: build and push docker image
+on:
+  push:
+    branches: 
+      - 'main'
+#  release:
+#    types: [published]
+jobs:
+  dockerhub:
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    steps:
+    - name: Login to DockerHub
+      uses: docker/login-action@v1 
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_TOKEN }}
+    - name: check out payment
+      uses: actions/checkout@v2
+      with:
+        repository: t2-project/payment
+        path: './payment'
+    - name: check out order
+      uses: actions/checkout@v2
+      with:
+        repository: t2-project/order
+        path: './order'
+    - name: check out inventory
+      uses: actions/checkout@v2
+      with:
+        repository: t2-project/inventory
+        path: './inventory'
+    - name: check out common
+      uses: actions/checkout@master
+      with:
+        repository: t2-project/common
+        path: './common'
+    - name: check out e2e-tests
+      uses: actions/checkout@master
+      with:
+        path: './e2e-tests'
+
+    - name: set up jdk
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'adopt'
+        java-version: '11'
+#
+    - name: build payment
+      run: cd payment && mvn clean install
+    - name: install payment
+      run: cd payment && mvn install:install-file -Dfile=./target/payment-0.0.1-SNAPSHOT.jar.original  -DpomFile=./pom.xml
+#  
+    - name: build order
+      run: cd order && mvn clean install
+    - name: install order
+      run: cd order && mvn install:install-file -Dfile=./target/order-0.0.1-SNAPSHOT.jar.original  -DpomFile=./pom.xml
+#   
+    - name: build inventory
+      run: cd inventory && mvn clean install
+    - name: install inventory
+      run: cd inevntory && mvn install:install-file -Dfile=./target/inventory-0.0.1-SNAPSHOT.jar  -DpomFile=./pom.xml
+#   
+    - name: build common
+      run: cd common && mvn clean install
+    - name: install common
+      run: cd common && mvn install:install-file -Dfile=./target/common-1.0-SNAPSHOT.jar  -DpomFile=./pom.xml
+#
+    - name: build e2etest
+      run: cd e2e-tests && mvn clean install
+#
+# that's how cool kids would do their tags:       
+#        docker build -t stiesssh/inventory:${{ env.RELEASE_VERSION }} .
+#        docker push stiesssh/inventory:${{ env.RELEASE_VERSION }}
+    - run: |
+        echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
+    - name: Build and push (manual)
+      run: |
+        echo ${{ env.RELEASE_VERSION }}
+        echo $RELEASE_VERSION
+        cd inventory
+        docker build -t stiesssh/e2etest:v0.1.0 .
+        docker push stiesssh/e2etest:v0.1.0
