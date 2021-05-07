@@ -1,7 +1,7 @@
 name: build and push docker image
 on:
   push:
-    branches: 
+    branches:
       - 'main'
 #  release:
 #    types: [published]
@@ -10,8 +10,15 @@ jobs:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     steps:
+    - name: set env
+      run: |
+         echo "TRAM_VERSION=${{secrets.TRAM_VERSION}}" >> $GITHUB_ENV
+         echo "JAEGER_VERSION=${{secrets.JAEGER_VERSION}}" >> $GITHUB_ENV
+         echo "RESILIENCE4J_VERSION=${{secrets.RESILIENCE4J_VERSION}}" >> $GITHUB_ENV
+         echo "JUNIT4_VERSION=${{secrets.JUNIT4_VERSION}}" >> $GITHUB_ENV
+         echo "TRAM_PARTICIPANT_VERSION=${{secrets.TRAM_PARTICIPANT_VERSION}}" >> $GITHUB_ENV
     - name: Login to DockerHub
-      uses: docker/login-action@v1 
+      uses: docker/login-action@v1
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
@@ -55,12 +62,12 @@ jobs:
       run: cd payment && mvn clean install
     - name: install payment
       run: cd payment && mvn install:install-file -Dfile=./target/payment-0.0.1-SNAPSHOT.jar.original  -DpomFile=./pom.xml
-#  
+#
     - name: build order
       run: cd order && mvn clean install
     - name: install order
       run: cd order && mvn install:install-file -Dfile=./target/order-0.0.1-SNAPSHOT.jar.original  -DpomFile=./pom.xml
-#   
+#  
     - name: build inventory
       run: cd inventory && mvn clean install
     - name: install inventory
@@ -69,7 +76,7 @@ jobs:
     - name: build e2etest
       run: cd e2e-tests && mvn clean install
 #
-# that's how cool kids would do their tags:       
+# that's how cool kids would do their tags:
 #        docker build -t stiesssh/inventory:${{ env.RELEASE_VERSION }} .
 #        docker push stiesssh/inventory:${{ env.RELEASE_VERSION }}
     - run: |
