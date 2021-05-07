@@ -45,6 +45,11 @@ jobs:
       with:
         distribution: 'adopt'
         java-version: '11'
+#   
+    - name: build common
+      run: cd common && mvn clean install
+    - name: install common
+      run: cd common && mvn install:install-file -Dfile=./target/common-1.0-SNAPSHOT.jar  -DpomFile=./pom.xml
 #
     - name: build payment
       run: cd payment && mvn clean install
@@ -59,12 +64,7 @@ jobs:
     - name: build inventory
       run: cd inventory && mvn clean install
     - name: install inventory
-      run: cd inevntory && mvn install:install-file -Dfile=./target/inventory-0.0.1-SNAPSHOT.jar  -DpomFile=./pom.xml
-#   
-    - name: build common
-      run: cd common && mvn clean install
-    - name: install common
-      run: cd common && mvn install:install-file -Dfile=./target/common-1.0-SNAPSHOT.jar  -DpomFile=./pom.xml
+      run: cd inevntory && mvn install:install-file -Dfile=./target/inventory-0.0.1-SNAPSHOT.jar.original  -DpomFile=./pom.xml
 #
     - name: build e2etest
       run: cd e2e-tests && mvn clean install
@@ -78,6 +78,6 @@ jobs:
       run: |
         echo ${{ env.RELEASE_VERSION }}
         echo $RELEASE_VERSION
-        cd inventory
+        cd e2e-tests
         docker build -t stiesssh/e2etest:v0.1.0 .
         docker push stiesssh/e2etest:v0.1.0
