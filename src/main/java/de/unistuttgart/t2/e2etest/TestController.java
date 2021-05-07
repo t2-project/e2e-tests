@@ -22,7 +22,7 @@ public class TestController {
     private final Logger LOG = LoggerFactory.getLogger(getClass());
 
     @Autowired
-    SagaIntegrationTest service;
+    TestService service;
 
     /**
      * we intercept ui backend / orchestrator.
@@ -41,12 +41,12 @@ public class TestController {
         
         String correlationId = request.getSessionId();
         
-        SagaIntegrationTest.correlationToStatus.put(correlationId, OrderStatus.FAILURE);
+        TestService.correlationToStatus.put(correlationId, OrderStatus.FAILURE);
         
         request.setChecksum(request.getSessionId());
         String sagaID = service.postToOrchestrator(request);
         
-        SagaIntegrationTest.correlationToSaga.put(correlationId, sagaID);
+        TestService.correlationToSaga.put(correlationId, sagaID);
     }
 
     /** 
@@ -55,18 +55,17 @@ public class TestController {
      * @param sagaid
      * @throws Exception
      */
-    @ResponseStatus(HttpStatus.ACCEPTED)
     @PostMapping(value = "/fakepay")
     public void fakepay(@RequestBody PaymentData paymentdata) throws Exception {
         LOG.info(String.format("payment saga request:"));
         
-        String sagaid = SagaIntegrationTest.correlationToSaga.get(paymentdata.getChecksum());
+        String sagaid = TestService.correlationToSaga.get(paymentdata.getChecksum());
         
         new Thread(()->service.executethings(()-> service.sagaRuntimeTest(paymentdata.getChecksum()), sagaid), sagaid).start();
         
         LOG.info("sent reply");        
  
-        OrderStatus expected = SagaIntegrationTest.correlationToStatus.get(paymentdata.getChecksum());
+        OrderStatus expected = TestService.correlationToStatus.get(paymentdata.getChecksum());
         if (expected == OrderStatus.FAILURE) {
             throw new Exception();
         } 

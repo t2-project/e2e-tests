@@ -40,7 +40,7 @@ import io.eventuate.tram.sagas.orchestration.SagaInstanceRepository;
  *
  */
 @Component
-public class SagaIntegrationTest {
+public class TestService {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass());
 
