@@ -11,11 +11,24 @@ import org.springframework.data.mongodb.repository.config.EnableMongoRepositorie
 import org.springframework.web.client.RestTemplate;
 
 import de.unistuttgart.t2.inventory.repository.ProductRepository;
-import de.unistuttgart.t2.repository.OrderRepository;
+import de.unistuttgart.t2.order.repository.OrderRepository;
+import io.eventuate.tram.sagas.orchestration.SagaInstanceRepository;
 import io.eventuate.tram.sagas.spring.orchestration.SagaOrchestratorConfiguration;
 import io.eventuate.tram.spring.consumer.kafka.EventuateTramKafkaMessageConsumerConfiguration;
 import io.eventuate.tram.spring.messaging.producer.jdbc.TramMessageProducerJdbcConfiguration;
 
+/**
+ * 
+ * Tests the entire T2 store.
+ * 
+ * <p>
+ * Needs all those saga configuration because {@link TestService} uses the
+ * {@link SagaInstanceRepository} Interface from the eventuate framework to
+ * access the saga instance database.
+ * 
+ * @author maumau
+ *
+ */
 @Configuration
 @EnableJpaRepositories
 @EnableAutoConfiguration

@@ -20,20 +20,23 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.unistuttgart.t2.common.saga.SagaRequest;
+import de.unistuttgart.t2.common.SagaRequest;
 import de.unistuttgart.t2.inventory.repository.InventoryItem;
 import de.unistuttgart.t2.inventory.repository.ProductRepository;
-import de.unistuttgart.t2.repository.OrderItem;
-import de.unistuttgart.t2.repository.OrderRepository;
-import de.unistuttgart.t2.repository.OrderStatus;
+import de.unistuttgart.t2.order.repository.OrderItem;
+import de.unistuttgart.t2.order.repository.OrderRepository;
+import de.unistuttgart.t2.order.repository.OrderStatus;
 import io.eventuate.tram.sagas.orchestration.SagaInstance;
 import io.eventuate.tram.sagas.orchestration.SagaInstanceRepository;
 
 /**
- * service for testing the t2 store.
+ * 
+ * Responsible for asserting that the T2 store's state is in the end always
+ * correct.
  * 
  * @author maumau
  *
@@ -46,37 +49,40 @@ public class TestService {
     private ObjectMapper mapper = new ObjectMapper();
 
     @Value("${t2.e2etest.orchestrator.url}")
-    String orchestrator;
+    private String orchestrator;
 
     @Autowired
-    RestTemplate template;
+    private RestTemplate template;
     @Autowired
-    SagaInstanceRepository sagaRepository;
+    private SagaInstanceRepository sagaRepository;
     @Autowired
-    OrderRepository orderRepository;
+    private OrderRepository orderRepository;
     @Autowired
-    ProductRepository productRepository;
+    private ProductRepository productRepository;
 
-    public Set<String> inprogress = new HashSet();
+    public Set<String> inprogress = new HashSet<String>();
 
     // i'm not sure how concurrent spring stuff is, so i'm using a concurrent map,
-    // feels saver or something like that.
+    // feels saver or something like that.always
     public Map<String, OrderStatus> correlationToStatus = new ConcurrentHashMap<>();
     public Map<String, String> correlationToSaga = new ConcurrentHashMap<>();
 
     /**
-     * test sagas at runtime
+     * Tests the T2 stores state at runtime.
      * 
-     * @param request the saga request
+     * @param correlationid to identify the saga instance
      */
     public void sagaRuntimeTest(String correlationid) {
         String sagaid = correlationToSaga.get(correlationid);
         LOG.info(String.format("%s : start test", sagaid));
         try {
             SagaInstance sagainstance = getFinishedSagaInstance(sagaid);
+            
+            String sessionId = getSessionId(sagainstance.getSerializedSagaData().getSagaDataJSON());
+            String orderId = getOrderId(sagainstance.getSerializedSagaData().getSagaDataJSON());
 
-            assertOrderStatus(sagainstance, correlationToStatus.get(correlationid));
-            assertReservationStatus(sagainstance, correlationToStatus.get(correlationid));
+            assertOrderStatus(orderId, sessionId, correlationToStatus.get(correlationid));
+            assertReservationStatus(sessionId);
             assertSagaInstanceStatus(sagainstance, correlationToStatus.get(correlationid));
 
             LOG.info(String.format("%s : no failure", sagaid));
@@ -90,7 +96,7 @@ public class TestService {
     }
 
     /**
-     * send post request to start a saga to the orchestrator
+     * Post saga request to the orchestrator.
      * 
      * @param request the request to send
      * @return id of started saga instance
@@ -100,12 +106,13 @@ public class TestService {
     }
 
     /**
-     * get saga instance with given id but only if its finished.
+     * Get saga instance with the given id but only if it is finished.
      * 
-     * poll saga instance database repeatedly until either the saga instance
+     * <p>
+     * Poll the saga instance database repeatedly until either the saga instance
      * transitioned into end state or a maximum number of iterations is exceeded.
      * 
-     * @param sagaid
+     * @param sagaid to find the saga instance
      * @return saga instance in end state
      * @throws TimeoutException if max number of iterations is exceeded.
      */
@@ -136,11 +143,12 @@ public class TestService {
     }
 
     /**
-     * assert status of saga instance.
+     * Asserts the state of the saga instance.
      * 
-     * @note apparently the 'compensation' entry from the saga instance database
-     *       represents whether the instance is current instance is compensating,
-     *       i.e. a finished saga instance is never compensating
+     * <p>
+     * Apparently the 'compensation' entry from the saga instance database
+     * represents whether the current instance is compensating, i.e. a finished saga
+     * instance is never compensating.
      * 
      * @param sagainstance the saga instance under test
      * @param expected     outcome to test for
@@ -155,34 +163,37 @@ public class TestService {
     }
 
     /**
-     * assert presence or absence of reservations belonging to given saga instance.
+     * Assert the absence of reservations belonging to the given saga instance.
      * 
-     * if expected is SUCCESS, the reservations should be absent (i.e. commited),
-     * otherwise they should be present.
+     * <p>
+     * For a successful saga instance as well as for a saga instance that was rolled
+     * back, there should be no reservations.
      * 
-     * @param sagainstance the saga instance under test
-     * @param expected     outcome to test for
+     * @param sessionId id of session
      */
-    private void assertReservationStatus(SagaInstance sagainstance, OrderStatus expected) {
-        String sessionId = getSessionId(sagainstance.getSerializedSagaData().getSagaDataJSON());
+    private void assertReservationStatus(String sessionId) {
         Set<String> sessionIds = getSessionIdsFromReservations();
 
         assertFalse(sessionIds.contains(sessionId),
-                String.format("reservations for saga instance %s not deleted.", sagainstance.getId()));
+                String.format("reservations for sessionId %s not deleted.", sessionId));
 
         // i will not assert, that the product unis were updated (or not) because that
         // is inventory internal and thus not part of e2e.
     }
 
     /**
-     * assert correctness of order belonging to given saga instance.
+     * Assert correct state of the order belonging to the given saga instance.
      * 
-     * @param sagainstance the saga instance under test
-     * @param expected     outcome to test for
+     * <p>
+     * If the saga rolled back, the order status should be
+     * {@link OrderStatus#FAILURE FAILURE} otherwise it should be
+     * {@link OrderStatus#SUCCESS SUCCESS}.
+     * 
+     * @param orderId   id of order
+     * @param sessionId id of session
+     * @param expected  outcome to be expected
      */
-    private void assertOrderStatus(SagaInstance sagainstance, OrderStatus expected) {
-        String sessionId = getSessionId(sagainstance.getSerializedSagaData().getSagaDataJSON());
-        String orderId = getOrderId(sagainstance.getSerializedSagaData().getSagaDataJSON());
+    private void assertOrderStatus(String orderId, String sessionId, OrderStatus expected) {
 
         Optional<OrderItem> order = orderRepository.findById(orderId);
         assertTrue(order.isPresent(), String.format("missing order with orderid %s", orderId));
@@ -191,9 +202,9 @@ public class TestService {
     }
 
     /**
-     * get all session ids for which a reservation exists.
+     * Get all sessionIds for which a reservation exists.
      * 
-     * @return set session ids
+     * @return A set of sessionIds
      */
     private Set<String> getSessionIdsFromReservations() {
         List<InventoryItem> items = productRepository.findAll();
@@ -206,51 +217,62 @@ public class TestService {
     }
 
     /**
-     * extract session id from json representation of saga details
+     * Figures out whether the given saga instance is finished.
      * 
-     * @param json saga details as json
-     * @return true is saga instance in endstate
+     * <p>
+     * Extracts the 'endState' field from the JSON representation of the saga State
+     * and checks whether it is {@code true} or {@code false}.
+     * 
+     * <p>
+     * There exists the query {@link SagaInstance#isEndState()} but it kind of
+     * always returns 'false'.
+     * 
+     * @param json state of saga instance as JSON
+     * @return true iff the saga instance is finished, false otherwise
      */
     private boolean isEndState(String json) {
         try {
             JsonNode root = mapper.readTree(json);
             return mapper.treeToValue(root.path("endState"), String.class).equals("true");
         } catch (JsonProcessingException e) {
-            // TODO Auto-generated catch block
-            throw new RuntimeException("parsing json failed", e);
+            e.printStackTrace();
         }
+        return false;
     }
 
     /**
-     * extract session id from json representation of saga details
+     * Extract the sessionId from the saga instance's data.
      * 
-     * @param json saga details as json
-     * @return the session id
+     * <p>
+     * The data is a JSON representation of
+     * {@link de.unistuttgart.t2.common.saga.SagaData SagaData}.
+     * 
+     * @param json saga data as json
+     * @return the sessionId
+     * @throws JsonProcessingException  if something was wrong with the JSON
+     * @throws JsonMappingException     if something was wrong with the JSON
      */
-    private String getSessionId(String json) {
-        try {
-            JsonNode root = mapper.readTree(json);
-            return mapper.treeToValue(root.path("sessionId"), String.class);
-        } catch (JsonProcessingException e) {
-            // TODO Auto-generated catch block
-            throw new RuntimeException("parsing json failed", e);
-        }
+    private String getSessionId(String json) throws JsonMappingException, JsonProcessingException {
+       
+        JsonNode root = mapper.readTree(json);
+        return mapper.treeToValue(root.path("sessionId"), String.class);
+
     }
 
     /**
-     * extract order id from json representation of saga details
+     * Extract the orderId from the saga instance's data.
+     * 
+     * <p>
+     * The data is a JSON representation of
+     * {@link de.unistuttgart.t2.common.saga.SagaData SagaData}.
      * 
      * @param json saga details as json
-     * @return the order id
+     * @return the orderId
+     * @throws JsonProcessingException  if something was wrong with the JSON
+     * @throws JsonMappingException     if something was wrong with the JSON
      */
-    private String getOrderId(String json) {
-        try {
-            JsonNode root = mapper.readTree(json);
-            return mapper.treeToValue(root.path("orderId"), String.class);
-        } catch (JsonProcessingException e) {
-            // TODO Auto-generated catch block
-
-            throw new RuntimeException("parsing json failed", e);
-        }
+    private String getOrderId(String json) throws JsonMappingException, JsonProcessingException {
+        JsonNode root = mapper.readTree(json);
+        return mapper.treeToValue(root.path("orderId"), String.class);
     }
 }
