@@ -121,6 +121,15 @@ public class TestController {
             service.inprogress.add(paymentdata.getChecksum());
 
         }
+        
+        if (!service.correlationToStatus.containsKey(paymentdata.getChecksum())) {
+            if (new Random().nextDouble() < 0.5) {
+                return;
+            } else {
+                throw new FakeFailureException();
+            }
+        }
+        
         OrderStatus expected = service.correlationToStatus.get(paymentdata.getChecksum());
 
         if (expected == OrderStatus.FAILURE) {
