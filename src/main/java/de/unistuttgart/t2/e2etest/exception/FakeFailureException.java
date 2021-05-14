@@ -7,5 +7,8 @@ package de.unistuttgart.t2.e2etest.exception;
  *
  */
 public class FakeFailureException extends Exception {
-
+    
+    public FakeFailureException (String message) {
+        super(message);
+    }
 }

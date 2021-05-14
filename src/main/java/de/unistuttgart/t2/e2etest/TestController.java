@@ -112,9 +112,10 @@ public class TestController {
     @PostMapping(value = "/fakepay")
     public void fakepay(@RequestBody PaymentData paymentdata) throws Exception {
         // beware of retries!!
+        LOG.info(String.format("incoming payment request for sagaid %s", paymentdata.getChecksum()));
         if (service.inprogress.contains(paymentdata.getChecksum())) {
             String sagaid = service.correlationToSaga.get(paymentdata.getChecksum());
-            LOG.info(String.format("Receive payment request: correlationsid: %s, sagaid: %s", paymentdata.getChecksum(),
+            LOG.info(String.format("Assert for: correlationsid: %s, sagaid: %s", paymentdata.getChecksum(),
                     sagaid));
 
             new Thread(() -> service.sagaRuntimeTest(paymentdata.getChecksum()), sagaid).start();
@@ -123,17 +124,18 @@ public class TestController {
         }
         
         if (!service.correlationToStatus.containsKey(paymentdata.getChecksum())) {
+            LOG.info(String.format("incoming payment request for sagaid %s", paymentdata.getChecksum()));
             if (new Random().nextDouble() < 0.5) {
                 return;
             } else {
-                throw new FakeFailureException();
+                throw new FakeFailureException("fake failure with correlation");
             }
         }
         
         OrderStatus expected = service.correlationToStatus.get(paymentdata.getChecksum());
 
         if (expected == OrderStatus.FAILURE) {
-            throw new FakeFailureException();
+            throw new FakeFailureException("fake failure that will be asserted");
         }
     }
 
@@ -146,6 +148,6 @@ public class TestController {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<String> handleFakeFailureException(FakeFailureException exception) {
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("faked failure");
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exception.getMessage());
     }
 }
