@@ -113,7 +113,7 @@ public class TestController {
     public void fakepay(@RequestBody PaymentData paymentdata) throws Exception {
         // beware of retries!!
         LOG.info(String.format("incoming payment request for sagaid %s", paymentdata.getChecksum()));
-        if (service.inprogress.contains(paymentdata.getChecksum())) {
+        if (!service.inprogress.contains(paymentdata.getChecksum())) {
             String sagaid = service.correlationToSaga.get(paymentdata.getChecksum());
             LOG.info(String.format("Assert for: correlationsid: %s, sagaid: %s", paymentdata.getChecksum(),
                     sagaid));
