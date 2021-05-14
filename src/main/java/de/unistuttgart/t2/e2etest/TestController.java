@@ -112,7 +112,7 @@ public class TestController {
     @PostMapping(value = "/fakepay")
     public void fakepay(@RequestBody PaymentData paymentdata) throws Exception {
         // beware of retries!!
-        if (!service.inprogress.contains(paymentdata.getChecksum())) {
+        if (service.inprogress.contains(paymentdata.getChecksum())) {
             String sagaid = service.correlationToSaga.get(paymentdata.getChecksum());
             LOG.info(String.format("Receive payment request: correlationsid: %s, sagaid: %s", paymentdata.getChecksum(),
                     sagaid));
