@@ -75,21 +75,44 @@ public class TestService {
     public void sagaRuntimeTest(String correlationid) {
         String sagaid = correlationToSaga.get(correlationid);
         LOG.info(String.format("%s : start test", sagaid));
+
+        StringBuilder sb = new StringBuilder("Test Report: \n");
+        sb.append("    Expected Saga Status: ").append(correlationToStatus.get(correlationid)).append("\n");
+        sb.append("    Saga Id: ").append(sagaid).append(" Correlation Id: ").append(correlationid).append("\n");
+        
         try {
             SagaInstance sagainstance = getFinishedSagaInstance(sagaid);
             
             String sessionId = getSessionId(sagainstance.getSerializedSagaData().getSagaDataJSON());
             String orderId = getOrderId(sagainstance.getSerializedSagaData().getSagaDataJSON());
 
-            assertOrderStatus(orderId, sessionId, correlationToStatus.get(correlationid));
-            assertReservationStatus(sessionId);
-            assertSagaInstanceStatus(sagainstance, correlationToStatus.get(correlationid));
-
-            LOG.info(String.format("%s : no failure", sagaid));
+            try {
+                assertOrderStatus(orderId, sessionId, correlationToStatus.get(correlationid));
+                sb.append("Order: correct \n");
+            } catch (Exception e) {
+                sb.append("Order: failed").append(e.getMessage()).append("\n");
+            }
+            
+            try {
+                assertReservationStatus(sessionId);
+                sb.append("Inventory: correct \n");
+            } catch (Exception e) {
+                sb.append("Inventory: failed").append(e.getMessage()).append("\n");
+            }
+            
+            try {
+                assertSagaInstanceStatus(sagainstance, correlationToStatus.get(correlationid));
+                sb.append("Saga Instance: correct \n");
+            } catch (Exception e) {
+                sb.append("Saga Instance: failed").append(e.getMessage()).append("\n");
+            }
+            
         } catch (Throwable e) {
-            LOG.info(String.format("%s : has failure : %s ", sagaid, e.getMessage()));
-            e.printStackTrace();
+            // 
+            sb.append("Test failed : ").append(e.getMessage());
         }
+        
+        LOG.info(sb.toString());
         correlationToSaga.remove(correlationid);
         correlationToStatus.remove(correlationid);
         inprogress.remove(correlationid);

@@ -111,8 +111,19 @@ public class TestController {
      */
     @PostMapping(value = "/fakepay")
     public void fakepay(@RequestBody PaymentData paymentdata) throws Exception {
-        // beware of retries!!
         LOG.info(String.format("incoming payment request for sagaid %s", paymentdata.getChecksum()));
+
+        // i have never seen this id in my life before.
+        if (!service.correlationToStatus.containsKey(paymentdata.getChecksum())) {
+            LOG.info(String.format("incoming payment request for sagaid %s", paymentdata.getChecksum()));
+            if (new Random().nextDouble() < 0.5) {
+                return;
+            } else {
+                throw new FakeFailureException("fake failure with correlation");
+            }
+        }
+        
+        // uh, i know that one but it's still the first time i see it!
         if (!service.inprogress.contains(paymentdata.getChecksum())) {
             String sagaid = service.correlationToSaga.get(paymentdata.getChecksum());
             LOG.info(String.format("Assert for: correlationsid: %s, sagaid: %s", paymentdata.getChecksum(),
@@ -123,17 +134,8 @@ public class TestController {
 
         }
         
-        if (!service.correlationToStatus.containsKey(paymentdata.getChecksum())) {
-            LOG.info(String.format("incoming payment request for sagaid %s", paymentdata.getChecksum()));
-            if (new Random().nextDouble() < 0.5) {
-                return;
-            } else {
-                throw new FakeFailureException("fake failure with correlation");
-            }
-        }
-        
         OrderStatus expected = service.correlationToStatus.get(paymentdata.getChecksum());
-
+        
         if (expected == OrderStatus.FAILURE) {
             throw new FakeFailureException("fake failure that will be asserted");
         }
