@@ -89,21 +89,21 @@ public class TestService {
             try {
                 assertOrderStatus(orderId, sessionId, correlationToStatus.get(correlationid));
                 sb.append("Order: correct \n");
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 sb.append("Order: failed").append(e.getMessage()).append("\n");
             }
             
             try {
                 assertReservationStatus(sessionId);
                 sb.append("Inventory: correct \n");
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 sb.append("Inventory: failed").append(e.getMessage()).append("\n");
             }
             
             try {
                 assertSagaInstanceStatus(sagainstance, correlationToStatus.get(correlationid));
                 sb.append("Saga Instance: correct \n");
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 sb.append("Saga Instance: failed").append(e.getMessage()).append("\n");
             }
             
