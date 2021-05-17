@@ -25,9 +25,9 @@ This service needs all other service up and running.
 It also needs some request to come in, or else there is nothing to assert. 
 
 
-## Build and Run Manually
+## Build and Run
 
-_**TODO: copy from Order once mangus checked it.**_
+Confer the [Documentation](https://t2-documentation.readthedocs.io/en/latest/guides/kube.html) on how to build, run or deploy the T2 Store services.
 
 ## HTTP Endpoints
 * ``/test`` :  UI Backend should POST to this endpoint instead of Orchestrator
