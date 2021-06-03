@@ -32,8 +32,6 @@ build/
 ### VS Code ###
 .vscode/
 
-.mvn/
-
 **/*.swp
 **/*local.properties
 **/*local.yaml

@@ -14,6 +14,7 @@ jobs:
       run: |
          echo "TRAM_VERSION=${{secrets.TRAM_VERSION}}" >> $GITHUB_ENV
          echo "JAEGER_VERSION=${{secrets.JAEGER_VERSION}}" >> $GITHUB_ENV
+         echo "JACOCO_VERSION=${{secrets.JACOCO_VERSION}}" >> $GITHUB_ENV
          echo "RESILIENCE4J_VERSION=${{secrets.RESILIENCE4J_VERSION}}" >> $GITHUB_ENV
          echo "JUNIT4_VERSION=${{secrets.JUNIT4_VERSION}}" >> $GITHUB_ENV
          echo "TRAM_PARTICIPANT_VERSION=${{secrets.TRAM_PARTICIPANT_VERSION}}" >> $GITHUB_ENV
@@ -54,27 +55,27 @@ jobs:
         java-version: '11'
 #   
     - name: build common
-      run: cd common && mvn clean install
+      run: cd common && ./mvnw clean install
     - name: install common
-      run: cd common && mvn install:install-file -Dfile=./target/common-1.0-SNAPSHOT.jar  -DpomFile=./pom.xml
+      run: cd common && ./mvnw install:install-file -Dfile=./target/common-1.0-SNAPSHOT.jar  -DpomFile=./pom.xml
 #
     - name: build payment
-      run: cd payment && mvn clean install
+      run: cd payment && ./mvnw clean install
     - name: install payment
-      run: cd payment && mvn install:install-file -Dfile=./target/payment-0.0.1-SNAPSHOT.jar.original  -DpomFile=./pom.xml
+      run: cd payment && ./mvnw install:install-file -Dfile=./target/payment-0.0.1-SNAPSHOT.jar.original  -DpomFile=./pom.xml
 #
     - name: build order
-      run: cd order && mvn clean install
+      run: cd order && ./mvnw clean install
     - name: install order
-      run: cd order && mvn install:install-file -Dfile=./target/order-0.0.1-SNAPSHOT.jar.original  -DpomFile=./pom.xml
+      run: cd order && ./mvnw install:install-file -Dfile=./target/order-0.0.1-SNAPSHOT.jar.original  -DpomFile=./pom.xml
 #  
     - name: build inventory
-      run: cd inventory && mvn clean install
+      run: cd inventory && ./mvnw clean install
     - name: install inventory
-      run: cd inventory && mvn install:install-file -Dfile=./target/inventory-0.0.1-SNAPSHOT.jar.original  -DpomFile=./pom.xml
+      run: cd inventory && ./mvnw install:install-file -Dfile=./target/inventory-0.0.1-SNAPSHOT.jar.original  -DpomFile=./pom.xml
 #
     - name: build e2etest
-      run: cd e2e-tests && mvn clean install
+      run: cd e2e-tests && ./mvnw clean install
 #
 # that's how cool kids would do their tags:
 #        docker build -t stiesssh/inventory:${{ env.RELEASE_VERSION }} .
