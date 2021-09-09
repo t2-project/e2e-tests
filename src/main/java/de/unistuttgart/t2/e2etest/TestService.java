@@ -62,8 +62,6 @@ public class TestService {
 
     public Set<String> inprogress = new HashSet<String>();
 
-    // i'm not sure how concurrent spring stuff is, so i'm using a concurrent map,
-    // feels saver or something like that.always
     public Map<String, OrderStatus> correlationToStatus = new ConcurrentHashMap<>();
     public Map<String, String> correlationToSaga = new ConcurrentHashMap<>();
 
