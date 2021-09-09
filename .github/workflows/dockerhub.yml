@@ -1,10 +1,6 @@
 name: build and push docker image
-on:
-  push:
-    branches:
-      - 'main'
-#  release:
-#    types: [published]
+on: push
+
 jobs:
   dockerhub:
     name: Push Docker image to Docker Hub
@@ -18,6 +14,7 @@ jobs:
          echo "RESILIENCE4J_VERSION=${{secrets.RESILIENCE4J_VERSION}}" >> $GITHUB_ENV
          echo "JUNIT4_VERSION=${{secrets.JUNIT4_VERSION}}" >> $GITHUB_ENV
          echo "TRAM_PARTICIPANT_VERSION=${{secrets.TRAM_PARTICIPANT_VERSION}}" >> $GITHUB_ENV
+         echo "MICROMETER_VERSION=${{secrets.MICROMETER_VERSION}}" >> $GITHUB_ENV
     - name: Login to DockerHub
       uses: docker/login-action@v1
       with:
@@ -87,5 +84,5 @@ jobs:
         echo ${{ env.RELEASE_VERSION }}
         echo $RELEASE_VERSION
         cd e2e-tests
-        docker build -t stiesssh/e2etest:v0.1.0 .
-        docker push stiesssh/e2etest:v0.1.0
+        docker build -t stiesssh/e2etest:${{ env.RELEASE_VERSION }} .
+        docker push stiesssh/e2etest:${{ env.RELEASE_VERSION }}
