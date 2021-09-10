@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeoutException;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,9 +27,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.unistuttgart.t2.common.SagaRequest;
-import de.unistuttgart.t2.inventory.repository.InventoryItem;
-import de.unistuttgart.t2.inventory.repository.ProductRepository;
 import de.unistuttgart.t2.inventory.repository.Reservation;
+import de.unistuttgart.t2.inventory.repository.ReservationRepository;
 import de.unistuttgart.t2.order.repository.OrderItem;
 import de.unistuttgart.t2.order.repository.OrderRepository;
 import de.unistuttgart.t2.order.repository.OrderStatus;
@@ -59,7 +60,7 @@ public class TestService {
     @Autowired
     private OrderRepository orderRepository;
     @Autowired
-    private ProductRepository productRepository;
+    private ReservationRepository reservationRepository;
 
     public Set<String> inprogress = new HashSet<String>();
 
@@ -89,21 +90,21 @@ public class TestService {
                 assertOrderStatus(orderId, sessionId, correlationToStatus.get(correlationid));
                 sb.append("Order: correct \n");
             } catch (Throwable e) {
-                sb.append("Order: failed").append(e.getMessage()).append("\n");
+                sb.append("Order: failed : ").append(e.getMessage()).append("\n");
             }
 
             try {
                 assertReservationStatus(sessionId);
                 sb.append("Inventory: correct \n");
             } catch (Throwable e) {
-                sb.append("Inventory: failed").append(e.getMessage()).append("\n");
+                sb.append("Inventory: failed : ").append(e.getMessage()).append("\n");
             }
 
             try {
                 assertSagaInstanceStatus(sagainstance, correlationToStatus.get(correlationid));
                 sb.append("Saga Instance: correct \n");
             } catch (Throwable e) {
-                sb.append("Saga Instance: failed").append(e.getMessage()).append("\n");
+                sb.append("Saga Instance: failed : ").append(e.getMessage()).append("\n");
             }
 
         } catch (Throwable e) {
@@ -228,18 +229,15 @@ public class TestService {
      * 
      * @return A set of sessionIds
      */
+    @Transactional
     private Set<String> getSessionIdsFromReservations() {
-        List<InventoryItem> items = productRepository.findAll();
-
-        Set<String> sessionIds = new HashSet<String>();
-        Set<Reservation> reservations = new HashSet<Reservation>();
+        List<Reservation> reservations = reservationRepository.findAll();
         
-        for (InventoryItem item : items) {
-            reservations.addAll(item.getReservations());
-            
-        }
-        for (Reservation reservation : reservations) {
+        Set<String> sessionIds = new HashSet<String>();
+        
+        for (Reservation reservation: reservations) {
             sessionIds.add(reservation.getUserId());
+            
         }
 
         return sessionIds;

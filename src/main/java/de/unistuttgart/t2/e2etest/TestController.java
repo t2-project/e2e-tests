@@ -147,7 +147,7 @@ public class TestController {
      * @param exception
      * @return a response entity with an exceptional message
      */
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler(FakeFailureException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ResponseEntity<String> handleFakeFailureException(FakeFailureException exception) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exception.getMessage());
