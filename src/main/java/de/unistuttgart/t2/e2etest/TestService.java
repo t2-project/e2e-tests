@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.unistuttgart.t2.common.SagaRequest;
 import de.unistuttgart.t2.inventory.repository.InventoryItem;
 import de.unistuttgart.t2.inventory.repository.ProductRepository;
+import de.unistuttgart.t2.inventory.repository.Reservation;
 import de.unistuttgart.t2.order.repository.OrderItem;
 import de.unistuttgart.t2.order.repository.OrderRepository;
 import de.unistuttgart.t2.order.repository.OrderStatus;
@@ -77,10 +78,10 @@ public class TestService {
         StringBuilder sb = new StringBuilder("Test Report: \n");
         sb.append("    Expected Saga Status: ").append(correlationToStatus.get(correlationid)).append("\n");
         sb.append("    Saga Id: ").append(sagaid).append(" Correlation Id: ").append(correlationid).append("\n");
-        
+
         try {
             SagaInstance sagainstance = getFinishedSagaInstance(sagaid);
-            
+
             String sessionId = getSessionId(sagainstance.getSerializedSagaData().getSagaDataJSON());
             String orderId = getOrderId(sagainstance.getSerializedSagaData().getSagaDataJSON());
 
@@ -90,26 +91,26 @@ public class TestService {
             } catch (Throwable e) {
                 sb.append("Order: failed").append(e.getMessage()).append("\n");
             }
-            
+
             try {
                 assertReservationStatus(sessionId);
                 sb.append("Inventory: correct \n");
             } catch (Throwable e) {
                 sb.append("Inventory: failed").append(e.getMessage()).append("\n");
             }
-            
+
             try {
                 assertSagaInstanceStatus(sagainstance, correlationToStatus.get(correlationid));
                 sb.append("Saga Instance: correct \n");
             } catch (Throwable e) {
                 sb.append("Saga Instance: failed").append(e.getMessage()).append("\n");
             }
-            
+
         } catch (Throwable e) {
-            // 
+            //
             sb.append("Test failed : ").append(e.getMessage());
         }
-        
+
         LOG.info(sb.toString());
         correlationToSaga.remove(correlationid);
         correlationToStatus.remove(correlationid);
@@ -198,7 +199,7 @@ public class TestService {
         assertFalse(sessionIds.contains(sessionId),
                 String.format("reservations for sessionId %s not deleted.", sessionId));
 
-        // i will not assert, that the product unis were updated (or not) because that
+        // i will not assert, that the product units were updated (or not) because that
         // is inventory internal and thus not part of e2e.
     }
 
@@ -229,11 +230,18 @@ public class TestService {
      */
     private Set<String> getSessionIdsFromReservations() {
         List<InventoryItem> items = productRepository.findAll();
-        Set<String> sessionIds = items.stream().map(i -> i.getReservations().keySet()).reduce(new HashSet<String>(),
-                (a, b) -> {
-                    a.addAll(b);
-                    return a;
-                });
+
+        Set<String> sessionIds = new HashSet<String>();
+        Set<Reservation> reservations = new HashSet<Reservation>();
+        
+        for (InventoryItem item : items) {
+            reservations.addAll(item.getReservations());
+            
+        }
+        for (Reservation reservation : reservations) {
+            sessionIds.add(reservation.getUserId());
+        }
+
         return sessionIds;
     }
 
@@ -270,11 +278,11 @@ public class TestService {
      * 
      * @param json saga data as json
      * @return the sessionId
-     * @throws JsonProcessingException  if something was wrong with the JSON
-     * @throws JsonMappingException     if something was wrong with the JSON
+     * @throws JsonProcessingException if something was wrong with the JSON
+     * @throws JsonMappingException    if something was wrong with the JSON
      */
     private String getSessionId(String json) throws JsonMappingException, JsonProcessingException {
-       
+
         JsonNode root = mapper.readTree(json);
         return mapper.treeToValue(root.path("sessionId"), String.class);
 
@@ -289,8 +297,8 @@ public class TestService {
      * 
      * @param json saga details as json
      * @return the orderId
-     * @throws JsonProcessingException  if something was wrong with the JSON
-     * @throws JsonMappingException     if something was wrong with the JSON
+     * @throws JsonProcessingException if something was wrong with the JSON
+     * @throws JsonMappingException    if something was wrong with the JSON
      */
     private String getOrderId(String json) throws JsonMappingException, JsonProcessingException {
         JsonNode root = mapper.readTree(json);
