@@ -12,7 +12,7 @@ jobs:
          echo "JAEGER_VERSION=${{secrets.JAEGER_VERSION}}" >> $GITHUB_ENV
          echo "JACOCO_VERSION=${{secrets.JACOCO_VERSION}}" >> $GITHUB_ENV
          echo "RESILIENCE4J_VERSION=${{secrets.RESILIENCE4J_VERSION}}" >> $GITHUB_ENV
-         echo "JUNIT4_VERSION=${{secrets.JUNIT4_VERSION}}" >> $GITHUB_ENV
+         echo "SPRINGDOC_VERSION=${{secrets.SPRINGDOC_VERSION}}" >> $GITHUB_ENV
          echo "TRAM_PARTICIPANT_VERSION=${{secrets.TRAM_PARTICIPANT_VERSION}}" >> $GITHUB_ENV
          echo "MICROMETER_VERSION=${{secrets.MICROMETER_VERSION}}" >> $GITHUB_ENV
     - name: Login to DockerHub
@@ -73,10 +73,6 @@ jobs:
 #
     - name: build e2etest
       run: cd e2e-tests && ./mvnw clean install
-#
-# that's how cool kids would do their tags:
-#        docker build -t stiesssh/inventory:${{ env.RELEASE_VERSION }} .
-#        docker push stiesssh/inventory:${{ env.RELEASE_VERSION }}
     - run: |
         echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
     - name: Build and push (manual)
@@ -84,5 +80,5 @@ jobs:
         echo ${{ env.RELEASE_VERSION }}
         echo $RELEASE_VERSION
         cd e2e-tests
-        docker build -t stiesssh/e2etest:${{ env.RELEASE_VERSION }} .
-        docker push stiesssh/e2etest:${{ env.RELEASE_VERSION }}
+        docker build -t t2project/e2etest:${{ env.RELEASE_VERSION }} .
+        docker push t2project/e2etest:${{ env.RELEASE_VERSION }}
