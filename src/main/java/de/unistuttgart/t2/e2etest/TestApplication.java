@@ -18,27 +18,22 @@ import io.eventuate.tram.spring.consumer.kafka.EventuateTramKafkaMessageConsumer
 import io.eventuate.tram.spring.messaging.producer.jdbc.TramMessageProducerJdbcConfiguration;
 
 /**
- * 
  * Tests the entire T2 store.
- * 
  * <p>
- * Needs all those saga configuration because {@link TestService} uses the
- * {@link SagaInstanceRepository} Interface from the eventuate framework to
- * access the saga instance database.
- * 
- * @author maumau
+ * Needs all those saga configuration because {@link TestService} uses the {@link SagaInstanceRepository} Interface from
+ * the eventuate framework to access the saga instance database.
  *
+ * @author maumau
  */
 @Configuration
-@EnableJpaRepositories(basePackageClasses = {	ProductRepository.class,
-												ReservationRepository.class })
+@EnableJpaRepositories(basePackageClasses = { ProductRepository.class, ReservationRepository.class })
 @EntityScan(basePackages = "de.unistuttgart.t2.inventory")
 @EnableAutoConfiguration
-@Import({	TramMessageProducerJdbcConfiguration.class,
-			EventuateTramKafkaMessageConsumerConfiguration.class,
-			SagaOrchestratorConfiguration.class })
+@Import({ TramMessageProducerJdbcConfiguration.class,
+          EventuateTramKafkaMessageConsumerConfiguration.class,
+          SagaOrchestratorConfiguration.class })
 @EnableTransactionManagement
-@EnableMongoRepositories(basePackageClasses = { OrderRepository.class })
+@EnableMongoRepositories(basePackageClasses = OrderRepository.class)
 @SpringBootApplication(scanBasePackageClasses = BaseScan.class)
 public class TestApplication {
 
