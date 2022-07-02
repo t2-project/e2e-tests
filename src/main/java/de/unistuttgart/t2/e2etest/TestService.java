@@ -1,54 +1,35 @@
 package de.unistuttgart.t2.e2etest;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeoutException;
-
-import org.springframework.transaction.annotation.Transactional;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+import java.util.*;
+import java.util.concurrent.*;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.*;
+
+import org.slf4j.*;
+import org.springframework.beans.factory.annotation.*;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
 
 import de.unistuttgart.t2.common.SagaRequest;
-import de.unistuttgart.t2.inventory.repository.Reservation;
-import de.unistuttgart.t2.inventory.repository.ReservationRepository;
-import de.unistuttgart.t2.order.repository.OrderItem;
-import de.unistuttgart.t2.order.repository.OrderRepository;
-import de.unistuttgart.t2.order.repository.OrderStatus;
-import io.eventuate.tram.sagas.orchestration.SagaInstance;
-import io.eventuate.tram.sagas.orchestration.SagaInstanceRepository;
+import de.unistuttgart.t2.inventory.repository.*;
+import de.unistuttgart.t2.order.repository.*;
+import io.eventuate.tram.sagas.orchestration.*;
 
 /**
- * 
- * Responsible for asserting that the T2 store's state is in the end always
- * correct.
- * 
- * @author maumau
+ * Responsible for asserting that the T2 store's state is in the end always correct.
  *
+ * @author maumau
  */
 @Component
 public class TestService {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass());
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Value("${t2.e2etest.orchestrator.url}")
     private String orchestrator;
@@ -62,14 +43,14 @@ public class TestService {
     @Autowired
     private ReservationRepository reservationRepository;
 
-    public Set<String> inprogress = new HashSet<String>();
+    public Set<String> inprogress = new HashSet<>();
 
     public Map<String, OrderStatus> correlationToStatus = new ConcurrentHashMap<>();
     public Map<String, String> correlationToSaga = new ConcurrentHashMap<>();
 
     /**
      * Tests the T2 stores state at runtime.
-     * 
+     *
      * @param correlationid to identify the saga instance
      */
     public void sagaRuntimeTest(String correlationid) {
@@ -120,7 +101,7 @@ public class TestService {
 
     /**
      * Post saga request to the orchestrator.
-     * 
+     *
      * @param request the request to send
      * @return id of started saga instance
      */
@@ -130,11 +111,10 @@ public class TestService {
 
     /**
      * Get saga instance with the given id but only if it is finished.
-     * 
      * <p>
-     * Poll the saga instance database repeatedly until either the saga instance
-     * transitioned into end state or a maximum number of iterations is exceeded.
-     * 
+     * Poll the saga instance database repeatedly until either the saga instance transitioned into end state or a
+     * maximum number of iterations is exceeded.
+     *
      * @param sagaid to find the saga instance
      * @return saga instance in end state
      * @throws TimeoutException if max number of iterations is exceeded.
@@ -161,44 +141,41 @@ public class TestService {
             }
         }
         throw new TimeoutException(
-                String.format("Saga instance %s did not finish after %d  iteration and a total of %d seconds.", sagaid,
-                        maxiteration, maxiteration * seconds));
+            String.format("Saga instance %s did not finish after %d  iteration and a total of %d seconds.", sagaid,
+                maxiteration, maxiteration * seconds));
     }
 
     /**
      * Asserts the state of the saga instance.
-     * 
      * <p>
-     * Apparently the 'compensation' entry from the saga instance database
-     * represents whether the current instance is compensating, i.e. a finished saga
-     * instance is never compensating.
-     * 
+     * Apparently the 'compensation' entry from the saga instance database represents whether the current instance is
+     * compensating, i.e. a finished saga instance is never compensating.
+     *
      * @param sagainstance the saga instance under test
      * @param expected     outcome to test for
      */
     private void assertSagaInstanceStatus(SagaInstance sagainstance, OrderStatus expected) {
         // end state already reached, or else we would not be here.
-//        if (expected == OrderStatus.FAILURE) {
-//            assertTrue(sagainstance.isCompensating());
-//        } else {
-//            assertFalse(sagainstance.isCompensating());
-//        }
+        // if (expected == OrderStatus.FAILURE) {
+        // assertTrue(sagainstance.isCompensating());
+        // } else {
+        // assertFalse(sagainstance.isCompensating());
+        // }
     }
 
     /**
      * Assert the absence of reservations belonging to the given saga instance.
-     * 
      * <p>
-     * For a successful saga instance as well as for a saga instance that was rolled
-     * back, there should be no reservations.
-     * 
+     * For a successful saga instance as well as for a saga instance that was rolled back, there should be no
+     * reservations.
+     *
      * @param sessionId id of session
      */
     private void assertReservationStatus(String sessionId) {
         Set<String> sessionIds = getSessionIdsFromReservations();
 
         assertFalse(sessionIds.contains(sessionId),
-                String.format("reservations for sessionId %s not deleted.", sessionId));
+            String.format("reservations for sessionId %s not deleted.", sessionId));
 
         // i will not assert, that the product units were updated (or not) because that
         // is inventory internal and thus not part of e2e.
@@ -206,12 +183,10 @@ public class TestService {
 
     /**
      * Assert correct state of the order belonging to the given saga instance.
-     * 
      * <p>
-     * If the saga rolled back, the order status should be
-     * {@link OrderStatus#FAILURE FAILURE} otherwise it should be
+     * If the saga rolled back, the order status should be {@link OrderStatus#FAILURE FAILURE} otherwise it should be
      * {@link OrderStatus#SUCCESS SUCCESS}.
-     * 
+     *
      * @param orderId   id of order
      * @param sessionId id of session
      * @param expected  outcome to be expected
@@ -226,18 +201,18 @@ public class TestService {
 
     /**
      * Get all sessionIds for which a reservation exists.
-     * 
+     *
      * @return A set of sessionIds
      */
     @Transactional
     private Set<String> getSessionIdsFromReservations() {
         List<Reservation> reservations = reservationRepository.findAll();
-        
-        Set<String> sessionIds = new HashSet<String>();
-        
-        for (Reservation reservation: reservations) {
+
+        Set<String> sessionIds = new HashSet<>();
+
+        for (Reservation reservation : reservations) {
             sessionIds.add(reservation.getUserId());
-            
+
         }
 
         return sessionIds;
@@ -245,15 +220,12 @@ public class TestService {
 
     /**
      * Figures out whether the given saga instance is finished.
-     * 
      * <p>
-     * Extracts the 'endState' field from the JSON representation of the saga State
-     * and checks whether it is {@code true} or {@code false}.
-     * 
+     * Extracts the 'endState' field from the JSON representation of the saga State and checks whether it is
+     * {@code true} or {@code false}.
      * <p>
-     * There exists the query {@link SagaInstance#isEndState()} but it kind of
-     * always returns 'false'.
-     * 
+     * There exists the query {@link SagaInstance#isEndState()} but it kind of always returns 'false'.
+     *
      * @param json state of saga instance as JSON
      * @return true iff the saga instance is finished, false otherwise
      */
@@ -269,11 +241,9 @@ public class TestService {
 
     /**
      * Extract the sessionId from the saga instance's data.
-     * 
      * <p>
-     * The data is a JSON representation of
-     * {@link de.unistuttgart.t2.common.saga.SagaData SagaData}.
-     * 
+     * The data is a JSON representation of {@link de.unistuttgart.t2.common.saga.SagaData SagaData}.
+     *
      * @param json saga data as json
      * @return the sessionId
      * @throws JsonProcessingException if something was wrong with the JSON
@@ -288,11 +258,9 @@ public class TestService {
 
     /**
      * Extract the orderId from the saga instance's data.
-     * 
      * <p>
-     * The data is a JSON representation of
-     * {@link de.unistuttgart.t2.common.saga.SagaData SagaData}.
-     * 
+     * The data is a JSON representation of {@link de.unistuttgart.t2.common.saga.SagaData SagaData}.
+     *
      * @param json saga details as json
      * @return the orderId
      * @throws JsonProcessingException if something was wrong with the JSON
