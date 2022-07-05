@@ -30,8 +30,8 @@ import io.eventuate.tram.spring.messaging.producer.jdbc.TramMessageProducerJdbcC
 @EntityScan(basePackages = "de.unistuttgart.t2.inventory")
 @EnableAutoConfiguration
 @Import({ TramMessageProducerJdbcConfiguration.class,
-          EventuateTramKafkaMessageConsumerConfiguration.class,
-          SagaOrchestratorConfiguration.class })
+    EventuateTramKafkaMessageConsumerConfiguration.class,
+    SagaOrchestratorConfiguration.class })
 @EnableTransactionManagement
 @EnableMongoRepositories(basePackageClasses = OrderRepository.class)
 @SpringBootApplication(scanBasePackageClasses = BaseScan.class)
