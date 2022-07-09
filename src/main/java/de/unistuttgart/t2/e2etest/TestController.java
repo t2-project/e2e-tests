@@ -15,7 +15,7 @@ import de.unistuttgart.t2.payment.PaymentData;
 /**
  * Defines endpoints for the e2e test.
  * <p>
- * The e2e test is intercepts the t2 store at two points. First it takes the
+ * The e2e test intercepts the T2-Project at two points. First it takes the
  * {@link de.unistuttgart.t2.common.SagaRequest SagaRequest} from the UIBackend to the orchestrator, and then it takes
  * the requests that the payment service posts. This way the e2e test knows what reply the payment service received and
  * thus also knows whether the saga instance is supposed to succeed or not.

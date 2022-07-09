@@ -18,7 +18,7 @@ import io.eventuate.tram.spring.consumer.kafka.EventuateTramKafkaMessageConsumer
 import io.eventuate.tram.spring.messaging.producer.jdbc.TramMessageProducerJdbcConfiguration;
 
 /**
- * Tests the entire T2 store.
+ * Tests the entire T2-Project.
  * <p>
  * Needs all those saga configuration because {@link TestService} uses the {@link SagaInstanceRepository} Interface from
  * the eventuate framework to access the saga instance database.
