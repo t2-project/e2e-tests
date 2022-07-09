@@ -41,11 +41,11 @@ this is output.
 
 explain output.
 
-## Application Properies
+## Application Properties
 
 ### Properties for Eventuate:
 
-(they are required because the e2e test rely on eventuate's db connectors to acces the saga instance db.)
+(they are required because the e2e test rely on eventuate's db connectors to access the saga instance db.)
 c.f. [eventuate tram cdc](https://eventuate.io/docs/manual/eventuate-tram/latest/getting-started-eventuate-tram.html) for explanations.
 
 property | read from env var |

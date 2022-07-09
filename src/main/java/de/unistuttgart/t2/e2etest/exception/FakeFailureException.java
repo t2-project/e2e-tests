@@ -5,7 +5,7 @@ package de.unistuttgart.t2.e2etest.exception;
  *
  * @author maumau
  */
-public class FakeFailureException extends Exception {
+public final class FakeFailureException extends Exception {
 
     private static final long serialVersionUID = 1L;
 

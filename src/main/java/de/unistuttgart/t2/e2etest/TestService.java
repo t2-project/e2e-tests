@@ -122,7 +122,7 @@ public class TestService {
     private SagaInstance getFinishedSagaInstance(String sagaid) throws TimeoutException {
         String sagatype = "de.unistuttgart.t2.orchestrator.saga.Saga";
 
-        // TODO : might be usefull if maxiteration and seconds are configurable.
+        // TODO : might be useful if maxiteration and seconds are configurable.
         int maxiteration = 20;
         int seconds = 5000;
 

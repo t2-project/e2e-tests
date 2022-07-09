@@ -35,7 +35,7 @@ import io.eventuate.tram.spring.messaging.producer.jdbc.TramMessageProducerJdbcC
 @EnableTransactionManagement
 @EnableMongoRepositories(basePackageClasses = OrderRepository.class)
 @SpringBootApplication(scanBasePackageClasses = BaseScan.class)
-public class TestApplication {
+public final class TestApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(TestApplication.class, args);
