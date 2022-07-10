@@ -1,5 +1,6 @@
 # e2e Test
-An e2e Test for the T2 Store.
+
+An e2e Test for the T2-Project.
 
 ## Concept 
 
@@ -27,9 +28,10 @@ It also needs some request to come in, or else there is nothing to assert.
 
 ## Build and Run
 
-Confer the [Documentation](https://t2-documentation.readthedocs.io/en/latest/guides/kube.html) on how to build, run or deploy the T2 Store services.
+Confer the [Documentation](https://t2-documentation.readthedocs.io/en/latest/guides/kube.html) on how to build, run or deploy the T2-Project services.
 
 ## HTTP Endpoints
+
 * ``/test`` :  UI Backend should POST to this endpoint instead of Orchestrator
 * ``/fakepay`` : Payment should POST to this endpoint instead of the actual payment provider
 
@@ -39,11 +41,11 @@ this is output.
 
 explain output.
 
-## Application Properies
+## Application Properties
 
 ### Properties for Eventuate:
 
-(they are required because the e2e test rely on eventuate's db connectors to acces the saga instance db.)
+(they are required because the e2e test rely on eventuate's db connectors to access the saga instance db.)
 c.f. [eventuate tram cdc](https://eventuate.io/docs/manual/eventuate-tram/latest/getting-started-eventuate-tram.html) for explanations.
 
 property | read from env var |

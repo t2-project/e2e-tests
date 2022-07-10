@@ -15,10 +15,10 @@ import de.unistuttgart.t2.payment.PaymentData;
 /**
  * Defines endpoints for the e2e test.
  * <p>
- * The e2e test is intercepts the t2 store at two points. First it takes the
- * {@link de.unistuttgart.t2.common.SagaRequest SagaRequest} from the UIBackend to the orchestrator, and then it takes
- * the requests that the payment service posts. This way the e2e test knows what reply the payment service received and
- * thus also knows whether the saga instance is supposed to succeed or not.
+ * The e2e test intercepts the T2-Project at two points. First it takes the {@link de.unistuttgart.t2.common.SagaRequest
+ * SagaRequest} from the UIBackend to the orchestrator, and then it takes the requests that the payment service posts.
+ * This way the e2e test knows what reply the payment service received and thus also knows whether the saga instance is
+ * supposed to succeed or not.
  *
  * @author maumau
  */
@@ -92,7 +92,6 @@ public class TestController {
 
         // i have never seen this id in my life before.
         if (!service.correlationToStatus.containsKey(paymentdata.getChecksum())) {
-            LOG.info(String.format("incoming payment request for sagaid %s", paymentdata.getChecksum()));
             if (new Random().nextDouble() < 0.5) {
                 return;
             }
@@ -120,7 +119,7 @@ public class TestController {
     /**
      * Creates the response entity in case of faked failure.
      *
-     * @param exception
+     * @param exception the exception that was thrown
      * @return a response entity with an exceptional message
      */
     @ExceptionHandler(FakeFailureException.class)

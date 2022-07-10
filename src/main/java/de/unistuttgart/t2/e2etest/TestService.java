@@ -20,7 +20,7 @@ import de.unistuttgart.t2.order.repository.*;
 import io.eventuate.tram.sagas.orchestration.*;
 
 /**
- * Responsible for asserting that the T2 store's state is in the end always correct.
+ * Responsible for asserting that the T2-Project's state is in the end always correct.
  *
  * @author maumau
  */
@@ -49,7 +49,7 @@ public class TestService {
     public Map<String, String> correlationToSaga = new ConcurrentHashMap<>();
 
     /**
-     * Tests the T2 stores state at runtime.
+     * Tests the T2-Projects state at runtime.
      *
      * @param correlationid to identify the saga instance
      */
@@ -122,7 +122,7 @@ public class TestService {
     private SagaInstance getFinishedSagaInstance(String sagaid) throws TimeoutException {
         String sagatype = "de.unistuttgart.t2.orchestrator.saga.Saga";
 
-        // TODO : might be usefull if maxiteration and seconds are configurable.
+        // TODO : might be useful if maxiteration and seconds are configurable.
         int maxiteration = 20;
         int seconds = 5000;
 
