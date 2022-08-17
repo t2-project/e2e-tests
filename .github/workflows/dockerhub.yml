@@ -11,13 +11,9 @@ jobs:
     steps:
     - name: set env
       run: |
-         echo "TRAM_VERSION=${{secrets.TRAM_VERSION}}" >> $GITHUB_ENV
-         echo "JAEGER_VERSION=${{secrets.JAEGER_VERSION}}" >> $GITHUB_ENV
-         echo "JACOCO_VERSION=${{secrets.JACOCO_VERSION}}" >> $GITHUB_ENV
-         echo "RESILIENCE4J_VERSION=${{secrets.RESILIENCE4J_VERSION}}" >> $GITHUB_ENV
-         echo "SPRINGDOC_VERSION=${{secrets.SPRINGDOC_VERSION}}" >> $GITHUB_ENV
-         echo "TRAM_PARTICIPANT_VERSION=${{secrets.TRAM_PARTICIPANT_VERSION}}" >> $GITHUB_ENV
-         echo "MICROMETER_VERSION=${{secrets.MICROMETER_VERSION}}" >> $GITHUB_ENV
+         curl -o setenv.sh -- 'https://raw.githubusercontent.com/t2-project/kube/main/setenv.sh'
+         vi setenv.sh -c ':%s/^export //' -c ':%s/\(.*\)#.*/\1/' -c ':wq' # Strip out 'export ' at the beginning and comments
+         cat setenv.sh >> $GITHUB_ENV
     - name: Login to DockerHub
       uses: docker/login-action@v1
       with:
