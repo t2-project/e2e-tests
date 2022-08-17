@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-
 jobs:
   dockerhub:
     name: Push Docker image to Docker Hub
@@ -12,7 +11,7 @@ jobs:
     - name: set env
       run: |
          curl -o setenv.sh -- 'https://raw.githubusercontent.com/t2-project/kube/main/setenv.sh'
-         vi setenv.sh -c ':%s/^export //' -c ':%s/\(.*\)#.*/\1/' -c ':wq' # Strip out 'export ' at the beginning and comments
+         vi setenv.sh -c ':%s/^export //' -c ':%s/\(.*\)#.*/\1/' -c ':%s/\s*$//g' -c ':wq' # Strip out 'export ' at the beginning, comments, and trailing whitespace
          cat setenv.sh >> $GITHUB_ENV
     - name: Login to DockerHub
       uses: docker/login-action@v1
