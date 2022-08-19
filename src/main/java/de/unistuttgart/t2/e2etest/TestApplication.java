@@ -34,7 +34,7 @@ import io.eventuate.tram.spring.messaging.producer.jdbc.TramMessageProducerJdbcC
     SagaOrchestratorConfiguration.class })
 @EnableTransactionManagement
 @EnableMongoRepositories(basePackageClasses = OrderRepository.class)
-@SpringBootApplication(scanBasePackageClasses = BaseScan.class)
+@SpringBootApplication(scanBasePackageClasses = { BaseScan.class, TestApplication.class })
 public final class TestApplication {
 
     public static void main(String[] args) {
