@@ -55,7 +55,7 @@ public class TestService {
      */
     public void sagaRuntimeTest(String correlationid) {
         String sagaid = correlationToSaga.get(correlationid);
-        LOG.info(String.format("%s : start test", sagaid));
+        LOG.info("{} : start test", sagaid);
 
         StringBuilder sb = new StringBuilder("Test Report: \n");
         sb.append("    Expected Saga Status: ").append(correlationToStatus.get(correlationid)).append("\n");

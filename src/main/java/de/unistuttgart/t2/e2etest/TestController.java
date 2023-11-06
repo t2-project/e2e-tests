@@ -49,7 +49,7 @@ public class TestController {
     @ResponseStatus(HttpStatus.ACCEPTED)
     @PostMapping(value = "/test")
     public void test(@RequestBody SagaRequest request) {
-        LOG.info(String.format("incoming saga request: %s", request.toString()));
+        LOG.info("incoming saga request: {}", request.toString());
 
         // 'miss use' sessionId for correlation.
         String correlationId = request.getSessionId();
@@ -88,7 +88,7 @@ public class TestController {
      */
     @PostMapping(value = "/fakepay")
     public void fakepay(@RequestBody PaymentData paymentdata) throws Exception {
-        LOG.info(String.format("incoming payment request for sagaid %s", paymentdata.getChecksum()));
+        LOG.info("incoming payment request for sagaid {}", paymentdata.getChecksum());
 
         // i have never seen this id in my life before.
         if (!service.correlationToStatus.containsKey(paymentdata.getChecksum())) {
@@ -101,8 +101,8 @@ public class TestController {
         // uh, i know that one but it's still the first time i see it!
         if (!service.inprogress.contains(paymentdata.getChecksum())) {
             String sagaid = service.correlationToSaga.get(paymentdata.getChecksum());
-            LOG.info(String.format("Assert for: correlationsid: %s, sagaid: %s", paymentdata.getChecksum(),
-                sagaid));
+            LOG.info("Assert for: correlationsid: {}, sagaid: {}", paymentdata.getChecksum(),
+                sagaid);
 
             new Thread(() -> service.sagaRuntimeTest(paymentdata.getChecksum()), sagaid).start();
             service.inprogress.add(paymentdata.getChecksum());
