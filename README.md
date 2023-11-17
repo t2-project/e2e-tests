@@ -25,7 +25,7 @@ It also needs some request to come in, or else there is nothing to assert.
 
 ## Build and Run
 
-Refer to the [Documentation](https://t2-documentation.readthedocs.io/en/latest/guides/deploy.html) on how to build, run or deploy the T2-Project services.
+Refer to the [Documentation](https://t2-documentation.readthedocs.io/en/latest/microservices/deploy.html) on how to build, run or deploy the T2-Project services.
 
 ## HTTP Endpoints
 
@@ -43,7 +43,7 @@ explain output.
 ### Properties for Eventuate
 
 (they are required because the e2e test rely on eventuate's db connectors to access the saga instance db.)
-c.f. [eventuate tram cdc](https://eventuate.io/docs/manual/eventuate-tram/latest/getting-started-eventuate-tram.html) for explanations.
+c.f. [eventuate tram cdc](https://eventuate.io/tram/gettingstarted.html) for explanations.
 
 | property | read from env var |
 | -------- | ----------------- |
