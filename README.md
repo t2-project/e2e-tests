@@ -43,7 +43,7 @@ explain output.
 ### Properties for Eventuate
 
 (they are required because the e2e test rely on eventuate's db connectors to access the saga instance db.)
-c.f. [eventuate tram cdc](https://eventuate.io/tram/gettingstarted.html) for explanations.
+c.f. [eventuate tram cdc](https://eventuate.io/docs/manual/eventuate-tram/latest/getting-started-eventuate-tram.html) for explanations.
 
 | property | read from env var |
 | -------- | ----------------- |
