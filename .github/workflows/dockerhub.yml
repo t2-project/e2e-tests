@@ -3,6 +3,8 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '**.md'
 jobs:
   dockerhub:
     name: Push Docker image to Docker Hub
