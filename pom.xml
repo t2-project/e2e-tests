@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>2.4.5</version>
+        <version>3.1.5</version>
         <relativePath /> <!-- lookup parent from repository -->
     </parent>
     <groupId>de.unistuttgart.t2</groupId>
@@ -13,7 +13,7 @@
     <name>e2etest</name>
     <description>e2etest for t2</description>
     <properties>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
     </properties>
 
     <repositories>
@@ -48,72 +48,76 @@
         <dependency>
             <groupId>io.eventuate.tram.core</groupId>
             <artifactId>eventuate-tram-spring-events</artifactId>
-            <version>${TRAM_VERSION}</version>
+            <version>${env.T2_TRAM_VERSION}</version>
         </dependency>
         <dependency>
             <groupId>io.eventuate.tram.core</groupId>
             <artifactId>eventuate-tram-spring-commands</artifactId>
-            <version>${TRAM_VERSION}</version>
+            <version>${env.T2_TRAM_VERSION}</version>
         </dependency>
         <dependency>
             <groupId>io.eventuate.tram.core</groupId>
             <artifactId>eventuate-tram-spring-messaging</artifactId>
-            <version>${TRAM_VERSION}</version>
+            <version>${env.T2_TRAM_VERSION}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.eventuate.tram.core/eventuate-tram-spring-producer-jdbc -->
         <dependency>
             <groupId>io.eventuate.tram.core</groupId>
             <artifactId>eventuate-tram-spring-producer-jdbc</artifactId>
-            <version>${TRAM_VERSION}</version>
+            <version>${env.T2_TRAM_VERSION}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.eventuate.tram.core/eventuate-tram-spring-consumer-jdbc -->
         <dependency>
             <groupId>io.eventuate.tram.core</groupId>
             <artifactId>eventuate-tram-spring-consumer-jdbc</artifactId>
-            <version>${TRAM_VERSION}</version>
+            <version>${env.T2_TRAM_VERSION}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.eventuate.tram.core/eventuate-tram-spring-consumer-kafka -->
         <dependency>
             <groupId>io.eventuate.tram.core</groupId>
             <artifactId>eventuate-tram-spring-consumer-kafka</artifactId>
-            <version>${TRAM_VERSION}</version>
+            <version>${env.T2_TRAM_VERSION}</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/io.eventuate.tram.sagas/eventuate-tram-sagas-spring-orchestration -->
         <dependency>
             <groupId>io.eventuate.tram.sagas</groupId>
             <artifactId>eventuate-tram-sagas-spring-orchestration</artifactId>
-            <version>${TRAM_PARTICIPANT_VERSION}</version>
+            <version>${env.T2_TRAM_PARTICIPANT_VERSION}</version>
         </dependency>
         <!-- https://mvnrepository.com/artifact/io.eventuate.tram.sagas/eventuate-tram-sagas-spring-orchestration-simple-dsl -->
         <dependency>
             <groupId>io.eventuate.tram.sagas</groupId>
             <artifactId>eventuate-tram-sagas-spring-orchestration-simple-dsl</artifactId>
-            <version>${TRAM_PARTICIPANT_VERSION}</version>
+            <version>${env.T2_TRAM_PARTICIPANT_VERSION}</version>
         </dependency>
 
         <!-- common things -->
         <dependency>
             <groupId>de.unistuttgart.t2</groupId>
             <artifactId>common</artifactId>
-            <version>${T2_COMMON_VERSION}</version>
+            <version>${env.T2_COMMON_VERSION}</version>
         </dependency>
+        <!-- See https://t2-documentation.readthedocs.io/en/latest/microservices/deploy.html#step-2-1-exceptions-for-service-e2e-test -->
         <dependency>
             <groupId>de.unistuttgart.t2</groupId>
             <artifactId>order</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+            <type>original</type>
         </dependency>
         <dependency>
             <groupId>de.unistuttgart.t2</groupId>
             <artifactId>inventory</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+            <type>original</type>
         </dependency>
         <dependency>
             <groupId>de.unistuttgart.t2</groupId>
             <artifactId>payment</artifactId>
             <version>0.0.1-SNAPSHOT</version>
+            <type>original</type>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
