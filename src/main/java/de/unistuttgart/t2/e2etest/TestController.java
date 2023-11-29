@@ -1,16 +1,17 @@
 package de.unistuttgart.t2.e2etest;
 
-import java.util.Random;
-
-import org.slf4j.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.*;
-import org.springframework.web.bind.annotation.*;
-
 import de.unistuttgart.t2.common.SagaRequest;
 import de.unistuttgart.t2.e2etest.exception.FakeFailureException;
 import de.unistuttgart.t2.order.repository.OrderStatus;
 import de.unistuttgart.t2.payment.PaymentData;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.Random;
 
 /**
  * Defines endpoints for the e2e test.
@@ -39,7 +40,7 @@ public class TestController {
      * <p>
      * As only the information about the credit cart will end up in the request to the payment provider, the field
      * {@code checksum} will be miss used to correlate the payment requests received in
-     * {@linkplain TestController#fakepay(PaymentData)} to the saga request reveiced in this operation.
+     * {@linkplain TestController#fakepay(PaymentData)} to the saga request received in this operation.
      * <p>
      * It would have been pretty cool, if i could just put the saga id into the request but i cannot because i only get
      * the saga id after i post the request to the orchestrator.
@@ -124,7 +125,7 @@ public class TestController {
      */
     @ExceptionHandler(FakeFailureException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ResponseEntity<String> handleFakeFailureException(FakeFailureException exception) {
+    public ResponseEntity<String> handleFakeFailureException(Exception exception) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exception.getMessage());
     }
 }

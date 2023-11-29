@@ -1,3 +1,7 @@
+info:
+  app:
+    version: '@project.version@'
+
 spring:
   datasource:
     url: ${SPRING_DATASOURCE_URL}
@@ -7,8 +11,6 @@ spring:
   data:
     mongodb:
       uri: ${SPRING_MONGO_URL}
-# inventory: dockerspring.data.mongodb.uri= mongodb://localhost:27017/inventory
-# orders: spring.data.mongodb.uri=mongodb://localhost:27017/data
 
 eventuatelocal:
   kafka:

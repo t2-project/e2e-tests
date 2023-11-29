@@ -12,7 +12,7 @@ jobs:
     steps:
     - name: set env
       run: |
-         curl -o setenv.sh -- 'https://raw.githubusercontent.com/t2-project/kube/main/setenv.sh'
+         curl -o setenv.sh -- 'https://raw.githubusercontent.com/t2-project/devops/main/setenv.sh'
          vi setenv.sh -c ':%s/^export //' -c ':%s/\(.*\)#.*/\1/' -c ':%s/\s*$//g' -c ':wq' # Strip out 'export ' at the beginning, comments, and trailing whitespace
          cat setenv.sh >> $GITHUB_ENV
     - name: Login to DockerHub
@@ -46,10 +46,11 @@ jobs:
         path: './e2e-tests'
 
     - name: set up jdk
-      uses: actions/setup-java@v2
+      uses: actions/setup-java@v3
       with:
-        distribution: 'adopt'
-        java-version: '11'
+        distribution: 'temurin'
+        java-version: '17'
+        cache: 'maven'
 #   
     - name: build common
       run: cd common && ./mvnw clean install

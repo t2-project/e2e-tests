@@ -1,5 +1,5 @@
 # ui backend
-FROM adoptopenjdk/openjdk11:jdk-11.0.2.9-slim
+FROM eclipse-temurin:17-jre
 WORKDIR /opt
 ENV PORT 8080
 EXPOSE 8080
