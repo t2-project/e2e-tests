@@ -56,13 +56,13 @@ jobs:
       run: cd common && ./mvnw clean install
 #
     - name: build payment
-      run: cd payment && ./mvnw clean install
+      run: cd payment && ./mvnw clean install && ./mvnw install:install-file -Dfile=./target/payment-0.0.1-SNAPSHOT.jar.original
 #
     - name: build order
-      run: cd order && ./mvnw clean install
+      run: cd order && ./mvnw clean install && ./mvnw install:install-file -Dfile=./target/order-0.0.1-SNAPSHOT.jar.original
 #  
     - name: build inventory
-      run: cd inventory && ./mvnw clean install
+      run: cd inventory && ./mvnw clean install && ./mvnw install:install-file -Dfile=./target/inventory-0.0.1-SNAPSHOT.jar.original
 #
     - name: build e2etest
       run: cd e2e-tests && ./mvnw clean install
