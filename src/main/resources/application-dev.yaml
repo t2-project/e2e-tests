@@ -1,0 +1,31 @@
+### E2E TESTS
+# Dev profile (other services have to be started locally)
+server:
+  port: 8088
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost/eventuate
+    username: eventuate
+    password: eventuate
+    driver-class-name: org.postgresql.Driver
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/data
+
+eventuatelocal:
+  kafka:
+    bootstrap:
+      servers: localhost:9092
+  zookeeper:
+    connection:
+      string: localhost:2181
+
+t2:
+  e2etest:
+    orchestrator:
+      url: http://localhost:8085/order
+
+logging:
+  level:
+    de.unistuttgart.t2: DEBUG
