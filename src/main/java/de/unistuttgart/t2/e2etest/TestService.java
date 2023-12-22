@@ -16,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
@@ -31,7 +31,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * @author maumau
  */
-@Component
+@Service
 public class TestService {
 
     private final Logger LOG = LoggerFactory.getLogger(getClass());
@@ -50,10 +50,9 @@ public class TestService {
     @Autowired
     private ReservationRepository reservationRepository;
 
-    public Set<String> inprogress = new HashSet<>();
-
-    public Map<String, OrderStatus> correlationToStatus = new ConcurrentHashMap<>();
-    public Map<String, String> correlationToSaga = new ConcurrentHashMap<>();
+    public static Set<String> inprogress = ConcurrentHashMap.newKeySet();
+    public static Map<String, OrderStatus> correlationToStatus = new ConcurrentHashMap<>();
+    public static Map<String, String> correlationToSaga = new ConcurrentHashMap<>();
 
     /**
      * Tests the T2-Projects state at runtime.
@@ -212,7 +211,7 @@ public class TestService {
      * @return A set of sessionIds
      */
     @Transactional
-    private Set<String> getSessionIdsFromReservations() {
+    protected Set<String> getSessionIdsFromReservations() {
         List<Reservation> reservations = reservationRepository.findAll();
 
         Set<String> sessionIds = new HashSet<>();

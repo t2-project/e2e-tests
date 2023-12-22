@@ -1,5 +1,6 @@
 ### E2E TESTS
-# Dev profile (other services have to be started locally)
+# E2E dev profile (other services have to be started locally)
+# Using name "e2e-dev" because if using "dev" the properties of a dependency like 'order' would be used
 server:
   port: 8088
 
@@ -25,6 +26,13 @@ t2:
   e2etest:
     orchestrator:
       url: http://localhost:8085/order
+
+opentracing:
+  jaeger:
+    service-name: e2etest
+    enabled: false
+    udp-sender:
+      host: localhost
 
 logging:
   level:

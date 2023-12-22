@@ -10,8 +10,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpServerErrorException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Random;
+
+import static de.unistuttgart.t2.e2etest.TestService.*;
 
 /**
  * Defines endpoints for the e2e test.
@@ -29,7 +33,7 @@ public class TestController {
     private final Logger LOG = LoggerFactory.getLogger(getClass());
 
     @Autowired
-    TestService service;
+    private TestService service;
 
     /**
      * Intercepts the communication from the UIBackend to the orchestrator.
@@ -55,10 +59,15 @@ public class TestController {
         // 'miss use' sessionId for correlation.
         String correlationId = request.getSessionId();
 
+        if(correlationToSaga.containsKey(correlationId)) {
+            throw new HttpServerErrorException(HttpStatus.NOT_IMPLEMENTED,
+                "E2E-Test does not support concurrent saga requests with the same session id!");
+        }
+
         if (new Random().nextDouble() < 0.5) {
-            service.correlationToStatus.put(correlationId, OrderStatus.FAILURE);
+            correlationToStatus.put(correlationId, OrderStatus.FAILURE);
         } else {
-            service.correlationToStatus.put(correlationId, OrderStatus.SUCCESS);
+            correlationToStatus.put(correlationId, OrderStatus.SUCCESS);
         }
 
         // sessionId now _twice_ in the saga request but only the one saved as
@@ -69,7 +78,7 @@ public class TestController {
         String sagaID = service.postToOrchestrator(modifiedRequest);
 
         // ... but also save sagaId because this is the only time i can get it!!
-        service.correlationToSaga.put(correlationId, sagaID);
+        correlationToSaga.put(correlationId, sagaID);
     }
 
     /**
@@ -92,7 +101,7 @@ public class TestController {
         LOG.info("incoming payment request for sagaid {}", paymentdata.getChecksum());
 
         // i have never seen this id in my life before.
-        if (!service.correlationToStatus.containsKey(paymentdata.getChecksum())) {
+        if (!correlationToStatus.containsKey(paymentdata.getChecksum())) {
             if (new Random().nextDouble() < 0.5) {
                 return;
             }
@@ -100,17 +109,16 @@ public class TestController {
         }
 
         // uh, i know that one but it's still the first time i see it!
-        if (!service.inprogress.contains(paymentdata.getChecksum())) {
-            String sagaid = service.correlationToSaga.get(paymentdata.getChecksum());
+        if (!inprogress.contains(paymentdata.getChecksum())) {
+            String sagaid = correlationToSaga.get(paymentdata.getChecksum());
             LOG.info("Assert for: correlationsid: {}, sagaid: {}", paymentdata.getChecksum(),
                 sagaid);
 
             new Thread(() -> service.sagaRuntimeTest(paymentdata.getChecksum()), sagaid).start();
-            service.inprogress.add(paymentdata.getChecksum());
-
+            inprogress.add(paymentdata.getChecksum());
         }
 
-        OrderStatus expected = service.correlationToStatus.get(paymentdata.getChecksum());
+        OrderStatus expected = correlationToStatus.get(paymentdata.getChecksum());
 
         if (expected == OrderStatus.FAILURE) {
             throw new FakeFailureException("fake failure that will be asserted");

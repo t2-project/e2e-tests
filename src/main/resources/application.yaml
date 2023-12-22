@@ -22,6 +22,13 @@ eventuatelocal:
     connection:
       string: ${EVENTUATELOCAL_ZOOKEEPER_CONNECTION_STRING}
 
+opentracing:
+  jaeger:
+    service-name: e2etest
+    enabled: ${T2_JAEGER_ENABLED}
+    udp-sender:
+      host: ${T2_JAEGER_HOST}
+
 t2:
   e2etest:
     orchestrator:
