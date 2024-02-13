@@ -58,5 +58,5 @@ c.f. [eventuate tram cdc](https://eventuate.io/docs/manual/eventuate-tram/latest
 
 | property | read from env var | description |
 | -------- | ----------------- | ----------- |
-| spring.data.mongodb.uri | SPRING_DATA_ORDER_MONGODB_URI | url to mongodb of the order service. e2e test is only able to connect to _one_ mongo db (because it relies on spring's [MongoRepository interface](https://docs.spring.io/spring-data/mongodb/docs/current/api/org/springframework/data/mongodb/repository/MongoRepository.html) and i can't make them talk to different dbs.) _(hint: it's the entire url, not only the host)_ |
+| spring.data.mongodb.uri | MONGO_HOST | hostname of mongodb of the order service. e2e test is only able to connect to _one_ mongo db (because it relies on spring's [MongoRepository interface](https://docs.spring.io/spring-data/mongodb/docs/current/api/org/springframework/data/mongodb/repository/MongoRepository.html) and i can't make them talk to different dbs.) |
 | t2.e2etest.orchestrator.url | T2_ORCHESTRATOR_URL | orchestrator endpoint to forward saga requests to. |

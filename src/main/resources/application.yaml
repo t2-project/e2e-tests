@@ -18,7 +18,7 @@ spring:
       driver-class-name: ${SPRING_DATASOURCE_INVENTORY_DRIVER_CLASS_NAME:org.postgresql.Driver}
   data:
     mongodb:
-      uri: ${SPRING_DATA_ORDER_MONGODB_URI}
+      uri: mongodb://${MONGO_HOST}:27017/data
 
 eventuatelocal:
   kafka:
