@@ -6,10 +6,16 @@ server:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost/eventuate
-    username: eventuate
-    password: eventuate
-    driver-class-name: org.postgresql.Driver
+    saga:
+      url: jdbc:postgresql://localhost:5432/eventuate
+      username: eventuate
+      password: eventuate
+      driver-class-name: org.postgresql.Driver
+    inventory:
+      url: jdbc:postgresql://localhost:5433/inventory
+      username: inventory
+      password: inventory
+      driver-class-name: org.postgresql.Driver
   data:
     mongodb:
       uri: mongodb://localhost:27018/data

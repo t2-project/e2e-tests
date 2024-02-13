@@ -1,7 +1,5 @@
 package de.unistuttgart.t2.e2etest;
 
-import de.unistuttgart.t2.inventory.repository.ProductRepository;
-import de.unistuttgart.t2.inventory.repository.ReservationRepository;
 import de.unistuttgart.t2.order.repository.OrderRepository;
 import io.eventuate.tram.sagas.orchestration.SagaInstanceRepository;
 import io.eventuate.tram.sagas.spring.orchestration.SagaOrchestratorConfiguration;
@@ -13,7 +11,6 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.springframework.web.client.RestTemplate;
@@ -27,11 +24,10 @@ import org.springframework.web.client.RestTemplate;
  * @author maumau
  */
 @Configuration
-@EnableJpaRepositories(basePackageClasses = { ProductRepository.class, ReservationRepository.class })
 @EntityScan(basePackages = "de.unistuttgart.t2.inventory")
-@Import({ TramMessageProducerJdbcConfiguration.class,
+@Import({TramMessageProducerJdbcConfiguration.class,
     EventuateTramKafkaMessageConsumerConfiguration.class,
-    SagaOrchestratorConfiguration.class })
+    SagaOrchestratorConfiguration.class})
 @EnableTransactionManagement
 @EnableMongoRepositories(basePackageClasses = OrderRepository.class)
 @SpringBootApplication
