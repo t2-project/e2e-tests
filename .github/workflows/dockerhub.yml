@@ -10,62 +10,30 @@ jobs:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     steps:
-    - name: set env
-      run: |
-         curl -o setenv.sh -- 'https://raw.githubusercontent.com/t2-project/devops/main/setenv.sh'
-         vi setenv.sh -c ':%s/^export //' -c ':%s/\(.*\)#.*/\1/' -c ':%s/\s*$//g' -c ':wq' # Strip out 'export ' at the beginning, comments, and trailing whitespace
-         cat setenv.sh >> $GITHUB_ENV
     - name: Login to DockerHub
       uses: docker/login-action@v3
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_TOKEN }}
-    - name: check out payment
+    - name: check out parent
       uses: actions/checkout@v4
       with:
-        repository: t2-project/payment
-        path: './payment'
-    - name: check out order
-      uses: actions/checkout@v4
-      with:
-        repository: t2-project/order
-        path: './order'
-    - name: check out inventory
-      uses: actions/checkout@v4
-      with:
-        repository: t2-project/inventory
-        path: './inventory'
-    - name: check out common
-      uses: actions/checkout@v4
-      with:
-        repository: t2-project/common
-        path: './common'
-    - name: check out e2e-tests
-      uses: actions/checkout@v4
-      with:
-        path: './e2e-tests'
-
-    - name: set up jdk
+        repository: t2-project/microservices
+        submodules: true
+    - name: Ensure to use latest versions
+      run: |
+        git submodule update --init --recursive
+        git submodule update --recursive --remote
+    - name: Set up jdk
       uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '17'
         cache: 'maven'
-#   
-    - name: Maven build common
-      run: cd common && ./mvnw clean install
-#
-    - name: Maven build payment
-      run: cd payment && ./mvnw clean install && ./mvnw install:install-file -Dfile=./target/payment-0.0.1-SNAPSHOT.jar.original
-#
-    - name: Maven build order
-      run: cd order && ./mvnw clean install && ./mvnw install:install-file -Dfile=./target/order-0.0.1-SNAPSHOT.jar.original
-#  
-    - name: Maven build inventory
-      run: cd inventory && ./mvnw clean install && ./mvnw install:install-file -Dfile=./target/inventory-0.0.1-SNAPSHOT.jar.original
-#
-    - name: Maven build e2etest
-      run: cd e2e-tests && ./mvnw clean install
+    - name: Maven build
+      run: |
+        chmod +x mvnw
+        ./mvnw --projects e2e-tests --also-make clean install
     - run: |
         echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
     - name: Docker build and push (manual)
