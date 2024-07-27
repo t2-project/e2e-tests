@@ -23,19 +23,19 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>order</artifactId>
             <version>${project.parent.version}</version>
-            <!-- <type>original</type> -->
+            <type>original</type>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>inventory</artifactId>
             <version>${project.parent.version}</version>
-            <!-- <type>original</type> -->
+            <type>original</type>
         </dependency>
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>payment</artifactId>
             <version>${project.parent.version}</version>
-            <!-- <type>original</type> -->
+            <type>original</type>
         </dependency>
 
         <!-- Spring -->
